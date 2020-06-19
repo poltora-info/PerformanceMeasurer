@@ -173,6 +173,8 @@ private boolean checkCache(String key) throws IOException {
     // borders - independent measure
     PerformanceMeasurer.get().start();
 
+    // internal long work...
+    int httpStatusCode = downloadPage();
 
     if (httpStatusCode >= 100 && httpStatusCode < 200) {
         PerformanceMeasurer.get().measure("Informational");
