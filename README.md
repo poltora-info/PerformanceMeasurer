@@ -134,15 +134,15 @@ For example, we have a web crawler which browses web-sites, and we need a statis
 
 ```java
 if (httpStatusCode >= 100 && httpStatusCode < 200) {
-    PerformanceMeasurer.getByMethodName().measure("Informational");
+    PerformanceMeasurer.get().measure("Informational");
 } else if (httpStatusCode >= 200 && httpStatusCode < 300) {
-    PerformanceMeasurer.getByMethodName().measure("Success");
+    PerformanceMeasurer.get().measure("Success");
 } else if (httpStatusCode >= 300 && httpStatusCode < 400) {
-    PerformanceMeasurer.getByMethodName().measure("Redirection");
+    PerformanceMeasurer.get().measure("Redirection");
 } else if (httpStatusCode >= 400 && httpStatusCode < 500) {
-    PerformanceMeasurer.getByMethodName().measure("Client Error");
+    PerformanceMeasurer.get().measure("Client Error");
 } else if (httpStatusCode >= 500 && httpStatusCode < 600) {
-    PerformanceMeasurer.getByMethodName().measure("Server Error");
+    PerformanceMeasurer.get().measure("Server Error");
 }
 ```
 
@@ -175,15 +175,15 @@ private boolean checkCache(String key) throws IOException {
 
 
     if (httpStatusCode >= 100 && httpStatusCode < 200) {
-        PerformanceMeasurer.getByMethodName().measure("Informational");
+        PerformanceMeasurer.get().measure("Informational");
     } else if (httpStatusCode >= 200 && httpStatusCode < 300) {
-        PerformanceMeasurer.getByMethodName().measure("Success");
+        PerformanceMeasurer.get().measure("Success");
     } else if (httpStatusCode >= 300 && httpStatusCode < 400) {
-        PerformanceMeasurer.getByMethodName().measure("Redirection");
+        PerformanceMeasurer.get().measure("Redirection");
     } else if (httpStatusCode >= 400 && httpStatusCode < 500) {
-        PerformanceMeasurer.getByMethodName().measure("Client Error");
+        PerformanceMeasurer.get().measure("Client Error");
     } else if (httpStatusCode >= 500 && httpStatusCode < 600) {
-        PerformanceMeasurer.getByMethodName().measure("Server Error");
+        PerformanceMeasurer.get().measure("Server Error");
     }
 
 
