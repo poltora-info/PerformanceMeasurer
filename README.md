@@ -168,7 +168,7 @@ Let’s modify example above:
 
 
 ```java
-private boolean checkCache(String key) throws IOException {
+private boolean checkPage(String key) throws IOException {
 
     // borders - independent measure
     PerformanceMeasurer.get().start();
