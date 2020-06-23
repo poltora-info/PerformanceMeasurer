@@ -62,10 +62,11 @@ for (Merchandise merchandise : merchandiseList) {
 #### Result
 
 ```shell
-c.d.import.MerchandiseImport 00:00:15 00:00:44 25%   r/s: 16;  failure: 36% 90;  mistake: 33% 83;  success: 31% 78;  sum: 251;
-c.d.import.MerchandiseImport 00:00:29 00:00:29 50%   r/s: 16(0);  failure: 35% 176(+86);  mistake: 32% 162(+79);  success: 33% 163(+85);  sum: 501(+250);
-c.d.import.MerchandiseImport 00:00:44 00:00:14 75%   r/s: 16(0);  failure: 34% 258(+82);  mistake: 32% 243(+81);  success: 33% 250(+87);  sum: 751(+250);
-c.d.import.MerchandiseImport 00:00:45    .     100%  r/s: 22(+6);  failure: 34% 340(+82);  mistake: 33% 331(+88);  success: 33% 329(+79);  sum: 1000(+249);
+c.d.import.MerchandiseImport 00:00:15 00:00:15 49%   r/s: 16;  fail: 35% 86;  success: 34% 83;  error: 31% 77;  sum: 246;
+c.d.import.MerchandiseImport 00:00:29 00:00:12 70%   r/s: 11(-5);  fail: 34% 121(+35);  success: 34% 120(+37);  error: 31% 110(+33);  sum: 351(+105);
+c.d.import.MerchandiseImport 00:00:44 00:00:07 86%   r/s: 9(-2);   fail: 35% 151(+30);  success: 34% 145(+25);  error: 31% 135(+25);  sum: 431(+80); 
+c.d.import.MerchandiseImport 00:00:59 00:00:00 99%   r/s: 8(-1);   fail: 35% 175(+24);  success: 34% 166(+21);  error: 31% 154(+19);  sum: 495(+64); 
+c.d.import.MerchandiseImport 00:01:01    .     100%  r/s: 8(0);    fail: 36% 178(+3);   success: 33% 167(+1);   error: 31% 155(+1);   sum: 500(+5);  
 ```
 
 ### Progress measuring by isolated criterion
@@ -168,13 +169,15 @@ Let’s modify example above:
 
 
 ```java
-private boolean checkPage(String key) throws IOException {
+private boolean downloadAndSavePage(String url) {
 
     // borders - independent measure
     PerformanceMeasurer.get().start();
 
+
     // internal long work...
-    int httpStatusCode = downloadPage();
+    int httpStatusCode = downloadPage(url);
+    
 
     if (httpStatusCode >= 100 && httpStatusCode < 200) {
         PerformanceMeasurer.get().measure("Informational");
