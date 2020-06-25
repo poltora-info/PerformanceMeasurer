@@ -21,7 +21,7 @@ Tool logs time, throughput per second, progress and forecast of workflow, **sens
 
 ### Progress measuring
 
-There are several pre-defined sensor's names such as `success`, `fail` and `error`. But you can use any string for any sensors. For example `PerformanceMeasurer.get().success();` or `PerformanceMeasurer.get().measure("success");`
+There are several pre-defined sensor's names such as `success`, `fail` and `error`. But you can use any string for any sensors. For example `.success();` or `.measure("success");`
 
 #### Call
 
