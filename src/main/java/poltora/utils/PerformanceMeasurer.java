@@ -320,7 +320,7 @@ public class PerformanceMeasurer {
 
 
         if (hasPersonalTimer())
-            log.append(" (personal)");
+            log.append("(personal) ");
 
         logValue(DurationFormatUtils.formatDuration(allDuration, "HH:mm:ss"));
 
@@ -471,7 +471,6 @@ public class PerformanceMeasurer {
     private int logValue(int logLength, String name, int value, int delta, Float percentage) {
 
         log
-                .append("  ")
                 .append(name)
                 .append(": ")
         ;
@@ -512,12 +511,13 @@ public class PerformanceMeasurer {
             logLength = currentLength;
         }
 
+        log.append("  ");
+
         return logLength;
     }
 
     private int logValue(int logLength, int value, String name) {
 
-        log.append(" ");
 
         int length = log.length();
 
@@ -537,13 +537,15 @@ public class PerformanceMeasurer {
             logLength = currentLength;
         }
 
+        log.append(" ");
+
         return logLength;
     }
 
     private void logValue(String value) {
         log
-                .append(" ")
                 .append(value)
+                .append(" ")
         ;
     }
 
