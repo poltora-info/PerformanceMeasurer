@@ -121,7 +121,7 @@ public class PerformanceMeasurer {
         }
     }
 
-    private static void display() {
+    public static void display() {
         if (measurers.isEmpty()) return;
 
 
@@ -229,7 +229,7 @@ public class PerformanceMeasurer {
         return clone;
     }
 
-    public PerformanceMeasurer display(PerformanceMeasurer measurerOld) {
+    private PerformanceMeasurer display(PerformanceMeasurer measurerOld) {
         if (!this.isUpdated(measurerOld)) {
             return this.newClone();
         }

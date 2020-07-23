@@ -89,7 +89,7 @@ for (Shop shop : shopList) {
     // get list of merchandise in shop
     List<Merchandise> merchandiseList = shop.getMerchandise();
 
-    // say measurer abut progress by isolated sensor
+    // say measurer about progress by isolated sensor
     PerformanceMeasurer.get().measure("shop");
 
     for (Merchandise merchandise : merchandiseList) {
