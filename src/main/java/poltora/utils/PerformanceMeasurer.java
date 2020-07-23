@@ -38,13 +38,14 @@ public class PerformanceMeasurer {
     private static final String SUCCESS_NAME = "success";
     private static final String ERROR_NAME = "error";
     private static final String FAIL_NAME = "fail";
-    private static Logger LOG = Logger.getLogger(PerformanceMeasurer.class);
+    private static Logger LOGGER = Logger.getLogger(PerformanceMeasurer.class);
     private static Map<String, PerformanceMeasurer> measurers = new ConcurrentHashMap<>();
     private static Map<String, PerformanceMeasurer> measurersOld = new ConcurrentHashMap<>();
     private static ScheduledExecutorService scheduler;
     private static int time = 15;
     private static TimeUnit timeUnit = TimeUnit.SECONDS;
 
+    private Logger logger;
     private String name;
     private Map<String, Sensor> sensors;
     private int possibleSize;
@@ -114,7 +115,7 @@ public class PerformanceMeasurer {
 
         for (PerformanceMeasurer measurer : measurers.values()) {
             if (measurer.currentTime != 0 && measurer.currentTime < curTime - maxSleepingTime) {
-                LOG.debug(String.format("Purging old measurers [%s]", measurer.name));
+                LOGGER.debug(String.format("Purging old measurers [%s]", measurer.name));
                 measurers.remove(measurer.name);
                 measurersOld.remove(measurer.name);
             }
@@ -150,7 +151,6 @@ public class PerformanceMeasurer {
 
         return get(
                 Thread.currentThread().getStackTrace()[2].getClassName()
-                        .replaceAll("\\B\\w+(\\.[a-z])", "$1")
         );
     }
 
@@ -159,7 +159,7 @@ public class PerformanceMeasurer {
         return get(
                 String.format(
                         "%s.%s()",
-                        Thread.currentThread().getStackTrace()[2].getClassName().replaceAll("\\B\\w+(\\.[a-z])", "$1"),
+                        Thread.currentThread().getStackTrace()[2].getClassName(),
                         Thread.currentThread().getStackTrace()[2].getMethodName()
                 )
         );
@@ -168,7 +168,6 @@ public class PerformanceMeasurer {
     public static PerformanceMeasurer get(Class clazz) {
         return get(
                 clazz.getName()
-                        .replaceAll("\\B\\w+(\\.[a-z])", "$1")
         );
     }
 
@@ -177,6 +176,7 @@ public class PerformanceMeasurer {
     }
 
     private PerformanceMeasurer(String name) {
+        logger = Logger.getLogger(name);
         this.name = name;
         startTime = System.currentTimeMillis();
 
@@ -196,6 +196,7 @@ public class PerformanceMeasurer {
     }
 
     private PerformanceMeasurer(PerformanceMeasurer other) {
+        this.logger = other.logger;
         this.name = other.name;
         this.sensors = other.sensors;
         this.possibleSize = other.possibleSize;
@@ -258,7 +259,7 @@ public class PerformanceMeasurer {
 
 
         // log
-        LOG.info(
+        logger.info(
                 measurer.log(measurerOld)
         );
 
@@ -318,7 +319,6 @@ public class PerformanceMeasurer {
         log = new StringBuffer();
 
 
-        log.append(name);
         if (hasPersonalTimer())
             log.append(" (personal)");
 

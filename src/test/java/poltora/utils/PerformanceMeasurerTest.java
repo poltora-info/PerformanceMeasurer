@@ -284,6 +284,11 @@ public class PerformanceMeasurerTest {
     }
 
     @Test
+    public void getByClass1() throws Exception {
+        PerformanceMeasurer.get(PerformanceMeasurer.class).measure("getByClass");
+    }
+
+    @Test
     public void getByClassThis() throws Exception {
         PerformanceMeasurer.get(this.getClass()).measure("getByClassThis");
     }
