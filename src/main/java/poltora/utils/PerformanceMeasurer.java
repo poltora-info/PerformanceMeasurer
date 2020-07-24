@@ -57,8 +57,10 @@ public class PerformanceMeasurer {
     // not state
     private long currentTime;
     private long allDuration;
+    private long momentDuration;
     private Sensor summarySensor;
     private Sensor throughputSensor;
+    private Sensor throughputMomentSensor;
     private StringBuffer log;
 
     static {
@@ -193,6 +195,7 @@ public class PerformanceMeasurer {
 
         summarySensor = new Sensor("sum");
         throughputSensor = new Sensor("r/s");
+        throughputMomentSensor = new Sensor("r/s /i");
     }
 
     private PerformanceMeasurer(PerformanceMeasurer other) {
@@ -204,8 +207,10 @@ public class PerformanceMeasurer {
         this.stepStartTime = other.stepStartTime;
         this.stepDuration = other.stepDuration;
         this.allDuration = other.allDuration;
+        this.momentDuration = other.momentDuration;
         this.summarySensor = other.summarySensor;
         this.throughputSensor = other.throughputSensor;
+        this.throughputMomentSensor = other.throughputMomentSensor;
         this.log = other.log;
         this.currentTime = other.currentTime;
     }
@@ -255,7 +260,7 @@ public class PerformanceMeasurer {
 
 
         // make summary
-        measurer.makeSummary();
+        measurer.makeSummary(measurerOld);
 
 
         // log
@@ -276,12 +281,19 @@ public class PerformanceMeasurer {
     }
 
     @SuppressWarnings("Convert2streamapi")
-    private void makeSummary() {
+    private void makeSummary(PerformanceMeasurer measurerOld) {
 
         if (hasPersonalTimer()) {
             allDuration = stepDuration.get();
+            momentDuration = currentTime - stepStartTime.get();
         } else {
             allDuration = currentTime - startTime;
+
+            if (measurerOld.currentTime == 0) {
+                momentDuration = currentTime - startTime;
+            } else {
+                momentDuration = currentTime - measurerOld.currentTime;
+            }
         }
         if (allDuration == 0) allDuration = 1;
 
@@ -294,6 +306,9 @@ public class PerformanceMeasurer {
         }
         throughputSensor = new Sensor("r/s");
         throughputSensor.measure((int) ((summarySensor.take() * 1000) / allDuration));
+
+        throughputMomentSensor = new Sensor("r/s /i");
+        throughputMomentSensor.measure((int) (((summarySensor.take() - measurerOld.summarySensor.take()) * 1000) / momentDuration));
     }
 
 
@@ -327,6 +342,8 @@ public class PerformanceMeasurer {
         logForecast(measurerOld);
 
         logThroughout(measurerOld);
+
+        logThroughoutMoment(measurerOld);
 
         logCommon(measurerOld);
 
@@ -450,16 +467,31 @@ public class PerformanceMeasurer {
 
     private void logThroughout(PerformanceMeasurer measurerOld) {
 
-        if (summarySensor.take() != 0) {
+        if (summarySensor.take() != 0) { //except isolated
             int logLength;
             logLength = logValue(
                     measurerOld.throughputSensor.logLength,
-                    "r/s",
+                    throughputSensor.name,
                     throughputSensor.take(),
                     throughputSensor.take() - measurerOld.throughputSensor.take()
             );
 
             throughputSensor.logLength = logLength;
+        }
+    }
+
+    private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
+
+        if (summarySensor.take() != 0) {
+            int logLength;
+            logLength = logValue(
+                    measurerOld.throughputMomentSensor.logLength,
+                    throughputMomentSensor.name,
+                    throughputMomentSensor.take(),
+                    throughputMomentSensor.take() - measurerOld.throughputMomentSensor.take()
+            );
+
+            throughputMomentSensor.logLength = logLength;
         }
     }
 
