@@ -195,7 +195,7 @@ public class PerformanceMeasurer {
 
         summarySensor = new Sensor("sum");
         throughputSensor = new Sensor("r/s");
-        throughputMomentSensor = new Sensor("r/s /i");
+        throughputMomentSensor = new Sensor("r/s/i");
     }
 
     private PerformanceMeasurer(PerformanceMeasurer other) {
@@ -307,7 +307,7 @@ public class PerformanceMeasurer {
         throughputSensor = new Sensor("r/s");
         throughputSensor.measure((int) ((summarySensor.take() * 1000) / allDuration));
 
-        throughputMomentSensor = new Sensor("r/s /i");
+        throughputMomentSensor = new Sensor("r/s/i");
         throughputMomentSensor.measure((int) (((summarySensor.take() - measurerOld.summarySensor.take()) * 1000) / momentDuration));
     }
 
@@ -368,21 +368,30 @@ public class PerformanceMeasurer {
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
 
             int logLength;
+
+            int delta = sensor.take() - sensorOld.take();
+            int deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
+
             if (notIsolated > 1) {
                 float percent = (float) sensor.take() * 100 / summarySensor.take();
+                float deltaPercent = (float) delta * 100 / deltaSummary;
+
                 logLength = logValue(
                         sensorOld.logLength,
                         sensor.name,
                         sensor.take(),
-                        sensor.take() - sensorOld.take(),
-                        percent
+                        percent,
+                        delta,
+                        deltaPercent
                 );
             } else {
                 logLength = logValue(
                         sensorOld.logLength,
                         sensor.name,
                         sensor.take(),
-                        sensor.take() - sensorOld.take()
+                        null,
+                        delta,
+                        null
                 );
             }
             sensor.logLength = logLength;
@@ -496,11 +505,12 @@ public class PerformanceMeasurer {
     }
 
     private int logValue(int countLogLength, String name, int value, int delta) {
-        return logValue(countLogLength, name, value, delta, null);
+        return logValue(countLogLength, name, value, null, delta, null);
     }
 
 
-    private int logValue(int logLength, String name, int value, int delta, Float percentage) {
+    private int logValue(int logLength, String name, int value, Float percentage, int delta, Float deltaPercentage) {
+        DecimalFormat val = new DecimalFormat("0");
 
         log
                 .append(name)
@@ -510,14 +520,23 @@ public class PerformanceMeasurer {
         int length = log.length();
 
 
+        // %
         if (percentage != null) {
-            DecimalFormat val = new DecimalFormat("0");
             log
                     .append(val.format(percentage))
-                    .append("% ")
+                    .append("%")
             ;
+            if (value != delta && deltaPercentage != null) {
+                log
+                        .append("(")
+                        .append(val.format(deltaPercentage))
+                        .append("%)")
+                ;
+            }
+            log.append(" ");
         }
 
+        // val
         log.append(String.valueOf(value));
 
         if (value != delta) {
