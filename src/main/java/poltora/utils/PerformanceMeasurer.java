@@ -429,6 +429,7 @@ public class PerformanceMeasurer {
         }
     }
 
+
     private void logForecast(PerformanceMeasurer measurerOld) {
 
         int count = 0;
@@ -526,13 +527,6 @@ public class PerformanceMeasurer {
                     .append(val.format(percentage))
                     .append("%")
             ;
-            if (value != delta && deltaPercentage != null) {
-                log
-                        .append("(")
-                        .append(val.format(deltaPercentage))
-                        .append("%)")
-                ;
-            }
             log.append(" ");
         }
 
@@ -540,8 +534,15 @@ public class PerformanceMeasurer {
         log.append(String.valueOf(value));
 
         if (value != delta) {
+            log.append("(");
+
+            if (deltaPercentage != null) {
+                log
+                        .append(val.format(deltaPercentage))
+                        .append("% ")
+                ;
+            }
             log
-                    .append("(")
                     .append(delta > 0 ? "+" : "")
                     .append(String.valueOf(delta))
                     .append(")")
