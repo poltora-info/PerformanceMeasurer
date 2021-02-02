@@ -63,8 +63,9 @@
 
 
     <root>
-        <appender-ref ref="console-min-error"/>
-        <appender-ref ref="application-error"/>
+        <appender-ref ref="console-min-info"/>
+        <appender-ref ref="application-info"/>
+        <appender-ref ref="application-debug"/>
     </root>
 </log4j:configuration>
 
