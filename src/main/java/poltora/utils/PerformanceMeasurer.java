@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Measuring device (measurer) for measuring performance
@@ -369,8 +369,8 @@ public class PerformanceMeasurer {
 
             int logLength;
 
-            int delta = sensor.take() - sensorOld.take();
-            int deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
+            long delta = sensor.take() - sensorOld.take();
+            long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
 
             if (notIsolated > 1) {
                 float percent = (float) sensor.take() * 100 / summarySensor.take();
@@ -432,7 +432,7 @@ public class PerformanceMeasurer {
 
     private void logForecast(PerformanceMeasurer measurerOld) {
 
-        int count = 0;
+        long count = 0;
         long size = 0;
 
         if (possibleSize != 0) {
@@ -505,12 +505,12 @@ public class PerformanceMeasurer {
         }
     }
 
-    private int logValue(int countLogLength, String name, int value, int delta) {
+    private int logValue(int countLogLength, String name, long value, long delta) {
         return logValue(countLogLength, name, value, null, delta, null);
     }
 
 
-    private int logValue(int logLength, String name, int value, Float percentage, int delta, Float deltaPercentage) {
+    private int logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
         DecimalFormat val = new DecimalFormat("0");
 
         log
@@ -601,40 +601,70 @@ public class PerformanceMeasurer {
         ;
     }
 
-    public int measure(String name) {
-        return getSensor(name).measure();
+    public void measure(String name) {
+        getSensor(name).measure();
     }
 
-    public int success() {
-        return getSensor(SUCCESS_NAME).measure();
+    public void success() {
+        getSensor(SUCCESS_NAME).measure();
     }
 
-    public int error() {
-        return getSensor(ERROR_NAME).measure();
+    public void error() {
+        getSensor(ERROR_NAME).measure();
     }
 
-    public int fail() {
-        return getSensor(FAIL_NAME).measure();
+    public void fail() {
+        getSensor(FAIL_NAME).measure();
+    }
+
+    public void measureByClassName() {
+//        String className = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
+        String className = Thread.currentThread().getStackTrace()[2].getClassName();
+
+        className = className.substring(className.lastIndexOf('.') + 1);
+
+        getSensor(className).measure();
+    }
+
+    public void measureByMethodName() {
+        String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
+
+        getSensor(methodName).measure();
+    }
+
+
+    @SuppressWarnings("unused")
+    public void measure(String name, int delta) {
+        getSensor(name).measure(delta);
     }
 
     @SuppressWarnings("unused")
-    public int measure(String name, int delta) {
-        return getSensor(name).measure(delta);
+    public void success(int delta) {
+        getSensor(SUCCESS_NAME).measure(delta);
     }
 
     @SuppressWarnings("unused")
-    public int success(int delta) {
-        return getSensor(SUCCESS_NAME).measure(delta);
+    public void error(int delta) {
+        getSensor(ERROR_NAME).measure(delta);
     }
 
     @SuppressWarnings("unused")
-    public int error(int delta) {
-        return getSensor(ERROR_NAME).measure(delta);
+    public void fail(int delta) {
+        getSensor(FAIL_NAME).measure(delta);
     }
 
-    @SuppressWarnings("unused")
-    public int fail(int delta) {
-        return getSensor(FAIL_NAME).measure(delta);
+    public void measureByClassName(int delta) {
+//        String className = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
+        String className = Thread.currentThread().getStackTrace()[2].getClassName();
+        className = className.substring(className.lastIndexOf('.') + 1);
+
+        getSensor(className).measure(delta);
+    }
+
+    public void measureByMethodName(int delta) {
+        String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
+
+        getSensor(methodName).measure(delta);
     }
 
     public void possibleSize(int size) {
@@ -671,14 +701,14 @@ public class PerformanceMeasurer {
     public static class Sensor {
 
         private String name;
-        private AtomicInteger sensor;
+        private LongAdder sensor;
         private boolean isolated;
         private long possibleSize;
         private int logLength;
 
         private Sensor(String name) {
             this.name = name;
-            sensor = new AtomicInteger();
+            sensor = new LongAdder();
         }
 
         private Sensor(Sensor other) {
@@ -691,20 +721,21 @@ public class PerformanceMeasurer {
 
         private Sensor newClone() {
             Sensor clone = new Sensor(this);
-            clone.sensor = new AtomicInteger(sensor.get());
+            clone.sensor = new LongAdder();
+            clone.sensor.add(sensor.sum());
             return clone;
         }
 
-        private int measure() {
-            return sensor.incrementAndGet();
+        private void measure() {
+            sensor.increment();
         }
 
-        private int measure(int delta) {
-            return sensor.addAndGet(delta);
+        private void measure(long delta) {
+            sensor.add(delta);
         }
 
-        private int take() {
-            return sensor.get();
+        private long take() {
+            return sensor.sum();
         }
     }
 }

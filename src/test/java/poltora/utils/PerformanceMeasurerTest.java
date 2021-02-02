@@ -30,6 +30,12 @@ public class PerformanceMeasurerTest {
 
     private static final Logger LOG = Logger.getLogger(PerformanceMeasurerTest.class);
 
+/*
+    2021-01-30 16:53:50,321[1-thread-1][INFO ][cms.Cms.folder301()                     ] 00:00:09 00:00:24 28%  r/s: 1;  r/s/i: 1;  success: 16;
+    2021-01-30 16:54:05,315[1-thread-1][INFO ][cms.Cms.folder301()                     ] 00:00:24 00:00:07 75%  r/s: 1(0);  r/s/i: 1(0);  success: 43(+27);
+    2021-01-30 16:54:20,316[1-thread-1][INFO ][cms.Cms.folder301()                     ] 00:00:39 00:00:00 101% r/s: 1(0);  r/s/i: 1(0);  success: 98% 57(93% +14);  error: 2% 1;  sum: 58(+15);//todo 101%
+*/
+
     @Test
     public void progressExample() throws Exception {
 
@@ -275,8 +281,9 @@ public class PerformanceMeasurerTest {
 
     @Test
     public void getByName() throws Exception {
-        PerformanceMeasurer.get("test string").success();
+        PerformanceMeasurer.get("test-string").success(); //log4j must know about "logger"
     }
+
 
     @Test
     public void getByClass() throws Exception {
@@ -296,6 +303,15 @@ public class PerformanceMeasurerTest {
     @Test
     public void getByMethod() throws Exception {
         PerformanceMeasurer.getByMethodName().success();
+    }
+
+    @Test
+    public void getByMethodTwice() throws Exception {
+        PerformanceMeasurer.getByMethodName().measureByMethodName();
+    }
+    @Test
+    public void measureByClass() throws Exception {
+        PerformanceMeasurer.getByMethodName().measureByClassName();
     }
 }
 
