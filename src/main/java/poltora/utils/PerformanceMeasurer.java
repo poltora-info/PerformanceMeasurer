@@ -675,9 +675,10 @@ public class PerformanceMeasurer {
     }
 
     @SuppressWarnings("unused")
-    public void setIsolated(String name) {
+    public PerformanceMeasurer setIsolated(String name) {
         Sensor sensor = getSensor(name);
         sensor.isolated = true;
+        return this;
     }
 
     @SuppressWarnings("unused")

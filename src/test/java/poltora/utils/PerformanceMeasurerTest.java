@@ -321,5 +321,12 @@ public class PerformanceMeasurerTest {
         // log [DEBUG]
         PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).success();
     }
+
+    @Test
+    public void setterChain() throws Exception {
+        // log [DEBUG]
+        PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).setIsolated("isolated").measure("isolated");
+        PerformanceMeasurer.getByMethodName().setIsolated("isolated").setPriority(Priority.DEBUG).measure("isolated");
+    }
 }
 
