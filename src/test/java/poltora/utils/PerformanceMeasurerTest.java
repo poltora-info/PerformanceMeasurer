@@ -16,6 +16,7 @@
 package poltora.utils;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -309,9 +310,16 @@ public class PerformanceMeasurerTest {
     public void getByMethodTwice() throws Exception {
         PerformanceMeasurer.getByMethodName().measureByMethodName();
     }
+
     @Test
     public void measureByClass() throws Exception {
         PerformanceMeasurer.getByMethodName().measureByClassName();
+    }
+
+    @Test
+    public void setProirity() throws Exception {
+        // log [DEBUG]
+        PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).success();
     }
 }
 

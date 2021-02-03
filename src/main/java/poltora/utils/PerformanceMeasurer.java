@@ -18,6 +18,7 @@ package poltora.utils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -46,6 +47,7 @@ public class PerformanceMeasurer {
     private static TimeUnit timeUnit = TimeUnit.SECONDS;
 
     private Logger logger;
+    private Priority priority;
     private String name;
     private Map<String, Sensor> sensors;
     private int possibleSize;
@@ -179,6 +181,7 @@ public class PerformanceMeasurer {
 
     private PerformanceMeasurer(String name) {
         logger = Logger.getLogger(name);
+        this.priority = Priority.INFO;
         this.name = name;
         startTime = System.currentTimeMillis();
 
@@ -264,7 +267,7 @@ public class PerformanceMeasurer {
 
 
         // log
-        logger.info(
+        logger.log(priority,
                 measurer.log(measurerOld)
         );
 
@@ -692,6 +695,11 @@ public class PerformanceMeasurer {
 
     public void stop() {
         stepDuration.addAndGet(System.currentTimeMillis() - stepStartTime.get());
+    }
+
+    public PerformanceMeasurer setPriority(Priority priority) {
+        this.priority = priority;
+        return this;
     }
 
     private boolean hasPersonalTimer() {
