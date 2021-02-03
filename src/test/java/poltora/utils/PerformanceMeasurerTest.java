@@ -317,6 +317,11 @@ public class PerformanceMeasurerTest {
     }
 
     @Test
+    public void measureByClassTwice() throws Exception {
+        PerformanceMeasurer.get().measureByClassName();
+    }
+
+    @Test
     public void setPriority() throws Exception {
         // log [DEBUG]
         PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).success();
