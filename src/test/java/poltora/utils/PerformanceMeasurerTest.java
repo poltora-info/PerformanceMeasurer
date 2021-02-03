@@ -317,7 +317,7 @@ public class PerformanceMeasurerTest {
     }
 
     @Test
-    public void setProirity() throws Exception {
+    public void setPriority() throws Exception {
         // log [DEBUG]
         PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).success();
     }
