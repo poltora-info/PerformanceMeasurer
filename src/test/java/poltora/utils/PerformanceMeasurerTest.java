@@ -62,6 +62,27 @@ public class PerformanceMeasurerTest {
     }
 
     @Test
+    public void progressExampleWhole() throws Exception {
+
+        int alreadyKnownSize = 500;
+
+        PerformanceMeasurer.getByMethodName().possibleSize(alreadyKnownSize);
+
+        for (int i = 1; i <= alreadyKnownSize; i++) {
+
+            int rnd = nextInt(3);
+
+            if (rnd == 0) {
+                PerformanceMeasurer.getByMethodName().success();
+            } else if (rnd == 1) {
+                PerformanceMeasurer.getByMethodName().fail();
+            } else if (rnd == 2) {
+                PerformanceMeasurer.getByMethodName().error();
+            }
+        }
+    }
+
+    @Test
     public void progressByIsolated() throws Exception {
 
         int alreadyKnownSize = 5;
@@ -84,6 +105,37 @@ public class PerformanceMeasurerTest {
                 // internal work
                 Thread.sleep(nextInt(i));
             }
+            PerformanceMeasurer.getByMethodName().measure("progress");
+        }
+    }
+
+
+
+    @Test
+    public void progressByIsolatedInfinite() throws Exception {
+
+        int alreadyKnownSize = 5;
+
+        PerformanceMeasurer.getByMethodName().possibleSize("progress", alreadyKnownSize);
+
+        for (int p = 1; p <= alreadyKnownSize; p++) {
+            for (int i = 200; i <= 300; i++) {
+
+                int rnd = nextInt(3);
+
+                if (rnd == 0) {
+                    PerformanceMeasurer.getByMethodName().success();
+                } else if (rnd == 1) {
+                    PerformanceMeasurer.getByMethodName().fail();
+                } else if (rnd == 2) {
+                    PerformanceMeasurer.getByMethodName().error();
+                }
+
+                // internal work
+                Thread.sleep(nextInt(i));
+            }
+            Thread.sleep(15000);
+
             PerformanceMeasurer.getByMethodName().measure("progress");
         }
     }
@@ -152,7 +204,6 @@ public class PerformanceMeasurerTest {
         }
     }
 
-
     @Test
     public void isolated() throws Exception {
 
@@ -176,6 +227,7 @@ public class PerformanceMeasurerTest {
             Thread.sleep(nextInt(i));
         }
     }
+
 
     @Test
     public void mute() throws Exception {
@@ -285,11 +337,11 @@ public class PerformanceMeasurerTest {
         PerformanceMeasurer.get("test-string").success(); //log4j must know about "logger"
     }
 
-
     @Test
     public void getByClass() throws Exception {
         PerformanceMeasurer.get(PerformanceMeasurerTest.class).measure("getByClass");
     }
+
 
     @Test
     public void getByClass1() throws Exception {

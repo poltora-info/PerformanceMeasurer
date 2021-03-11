@@ -436,8 +436,9 @@ public class PerformanceMeasurer {
             logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
-
-        logValue(4, (int) percent, "%");
+        if (percent != 100 || measurerOld.summarySensor.take() != 0) {
+            logValue(4, (int) percent, "%");
+        }
     }
 
     private void logThroughout(PerformanceMeasurer measurerOld) {
