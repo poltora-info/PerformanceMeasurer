@@ -357,7 +357,7 @@ public class PerformanceMeasurer {
     }
 
     private void logCommon(PerformanceMeasurer measurerOld) {
-        int notIsolated = 0; //todo flag
+        int notIsolated = 0;
         for (Sensor sensor : sensors.values()) {
             if (sensor.take() != 0 && !sensor.isolated) {
                 notIsolated++;
@@ -369,15 +369,17 @@ public class PerformanceMeasurer {
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
+
+
             if (notIsolated > 1) {
-                sensor.logPercentage(measurerOld, sensorOld);
+                log(measurerOld, sensor, sensorOld);
             } else {
-                sensor.log(sensorOld);
+                log(sensor, sensorOld);
             }
         }
 
         if (notIsolated > 1) {
-            summarySensor.log(measurerOld.summarySensor);
+            log(summarySensor, measurerOld.summarySensor);
         }
     }
 
@@ -388,10 +390,10 @@ public class PerformanceMeasurer {
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-            sensor.log(sensorOld);
+
+            log(sensor, sensorOld);
         }
     }
-
 
     private void logForecast(PerformanceMeasurer measurerOld) {
 
@@ -441,17 +443,108 @@ public class PerformanceMeasurer {
     private void logThroughout(PerformanceMeasurer measurerOld) {
 
         if (summarySensor.take() != 0) { //except isolated
-            throughputSensor.log(measurerOld.throughputSensor);
+            log(throughputSensor, measurerOld.throughputSensor);
         }
     }
+
 
     private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
 
         if (summarySensor.take() != 0) {
-            throughputMomentSensor.log(measurerOld.throughputMomentSensor);
+            log(throughputMomentSensor, measurerOld.throughputMomentSensor);
         }
     }
 
+    private void log(PerformanceMeasurer measurerOld, Sensor sensor, Sensor sensorOld) {
+        long delta = sensor.take() - sensorOld.take();
+        float percent = (float) sensor.take() * 100 / summarySensor.take();
+        long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
+        float deltaPercent = (float) delta * 100 / deltaSummary;
+
+        int logLength;
+        logLength = logValue(
+                sensorOld.logLength,
+                sensor.name,
+                sensor.take(),
+                percent,
+                delta,
+                deltaPercent
+        );
+        sensor.logLength = logLength;
+    }
+
+    private void log(Sensor sensor, Sensor sensorOld) {
+        int logLength;
+        logLength = logValue(
+                sensorOld.logLength,
+                sensor.name,
+                sensor.take(),
+                null,
+                sensor.take() - sensorOld.take(),
+                null
+        );
+
+        sensor.logLength = logLength;
+    }
+
+
+    private int logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
+        DecimalFormat val = new DecimalFormat("0");
+
+        log
+                .append(name)
+                .append(": ")
+        ;
+
+        int length = log.length();
+
+
+        // %
+        if (percentage != null) {
+            log
+                    .append(val.format(percentage))
+                    .append("%")
+            ;
+            log.append(" ");
+        }
+
+        // val
+        log.append(String.valueOf(value));
+
+        if (value != delta) {
+            log.append("(");
+
+            if (deltaPercentage != null) {
+                log
+                        .append(val.format(deltaPercentage))
+                        .append("% ")
+                ;
+            }
+            log
+                    .append(delta > 0 ? "+" : "")
+                    .append(String.valueOf(delta))
+                    .append(")")
+            ;
+        }
+
+
+        log.append(";");
+
+
+        int currentLength = log.length() - length;
+
+        if (currentLength < logLength) {
+            log.append(StringUtils.repeat(" ", logLength - currentLength));
+        }
+
+        if (logLength < currentLength) {
+            logLength = currentLength;
+        }
+
+        log.append("  ");
+
+        return logLength;
+    }
 
     private int logValue(int logLength, int value, String name) {
 
@@ -627,90 +720,6 @@ public class PerformanceMeasurer {
 
         private long take() {
             return sensor.sum();
-        }
-
-        private void logPercentage(PerformanceMeasurer measurerOld, Sensor sensorOld) {
-            long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
-            float percent = (float) take() * 100 / summarySensor.take();
-            float deltaPercent = (float) (take() - sensorOld.take()) * 100 / deltaSummary;
-
-            logValue(
-                    sensorOld.logLength,
-                    name,
-                    take(),
-                    percent,
-                    take() - sensorOld.take(),
-                    deltaPercent
-            );
-        }
-
-        private void log(Sensor sensorOld) {
-            logValue(
-                    sensorOld.logLength,
-                    name,
-                    take(),
-                    null,
-                    take() - sensorOld.take(),
-                    null
-            );
-        }
-
-        private void logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
-            DecimalFormat val = new DecimalFormat("0");
-
-            log
-                    .append(name)
-                    .append(": ")
-            ;
-
-            int length = log.length();
-
-
-            // %
-            if (percentage != null) {
-                log
-                        .append(val.format(percentage))
-                        .append("%")
-                ;
-                log.append(" ");
-            }
-
-            // val
-            log.append(String.valueOf(value));
-
-            if (value != delta) {
-                log.append("(");
-
-                if (deltaPercentage != null) {
-                    log
-                            .append(val.format(deltaPercentage))
-                            .append("% ")
-                    ;
-                }
-                log
-                        .append(delta > 0 ? "+" : "")
-                        .append(String.valueOf(delta))
-                        .append(")")
-                ;
-            }
-
-
-            log.append(";");
-
-
-            int currentLength = log.length() - length;
-
-            if (currentLength < logLength) {
-                log.append(StringUtils.repeat(" ", logLength - currentLength));
-            }
-
-            if (logLength < currentLength) {
-                logLength = currentLength;
-            }
-
-            log.append("  ");
-
-            this.logLength = logLength;
         }
     }
 }
