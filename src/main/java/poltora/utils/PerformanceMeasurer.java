@@ -357,7 +357,7 @@ public class PerformanceMeasurer {
     }
 
     private void logCommon(PerformanceMeasurer measurerOld) {
-        int notIsolated = 0;
+        int notIsolated = 0; //todo flag
         for (Sensor sensor : sensors.values()) {
             if (sensor.take() != 0 && !sensor.isolated) {
                 notIsolated++;
@@ -369,46 +369,15 @@ public class PerformanceMeasurer {
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-
-            int logLength;
-
-            long delta = sensor.take() - sensorOld.take();
-            long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
-
             if (notIsolated > 1) {
-                float percent = (float) sensor.take() * 100 / summarySensor.take();
-                float deltaPercent = (float) delta * 100 / deltaSummary;
-
-                logLength = logValue(
-                        sensorOld.logLength,
-                        sensor.name,
-                        sensor.take(),
-                        percent,
-                        delta,
-                        deltaPercent
-                );
+                sensor.logPercentage(measurerOld, sensorOld);
             } else {
-                logLength = logValue(
-                        sensorOld.logLength,
-                        sensor.name,
-                        sensor.take(),
-                        null,
-                        delta,
-                        null
-                );
+                sensor.log(sensorOld);
             }
-            sensor.logLength = logLength;
         }
 
         if (notIsolated > 1) {
-            int logLength;
-            logLength = logValue(
-                    measurerOld.summarySensor.logLength,
-                    summarySensor.name,
-                    summarySensor.take(),
-                    summarySensor.take() - measurerOld.summarySensor.take()
-            );
-            summarySensor.logLength = logLength;
+            summarySensor.log(measurerOld.summarySensor);
         }
     }
 
@@ -419,16 +388,7 @@ public class PerformanceMeasurer {
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-
-            int logLength;
-            logLength = logValue(
-                    sensorOld.logLength,
-                    sensor.name,
-                    sensor.take(),
-                    sensor.take() - sensorOld.take()
-            );
-
-            sensor.logLength = logLength;
+            sensor.log(sensorOld);
         }
     }
 
@@ -481,95 +441,17 @@ public class PerformanceMeasurer {
     private void logThroughout(PerformanceMeasurer measurerOld) {
 
         if (summarySensor.take() != 0) { //except isolated
-            int logLength;
-            logLength = logValue(
-                    measurerOld.throughputSensor.logLength,
-                    throughputSensor.name,
-                    throughputSensor.take(),
-                    throughputSensor.take() - measurerOld.throughputSensor.take()
-            );
-
-            throughputSensor.logLength = logLength;
+            throughputSensor.log(measurerOld.throughputSensor);
         }
     }
 
     private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
 
         if (summarySensor.take() != 0) {
-            int logLength;
-            logLength = logValue(
-                    measurerOld.throughputMomentSensor.logLength,
-                    throughputMomentSensor.name,
-                    throughputMomentSensor.take(),
-                    throughputMomentSensor.take() - measurerOld.throughputMomentSensor.take()
-            );
-
-            throughputMomentSensor.logLength = logLength;
+            throughputMomentSensor.log(measurerOld.throughputMomentSensor);
         }
     }
 
-    private int logValue(int countLogLength, String name, long value, long delta) {
-        return logValue(countLogLength, name, value, null, delta, null);
-    }
-
-
-    private int logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
-        DecimalFormat val = new DecimalFormat("0");
-
-        log
-                .append(name)
-                .append(": ")
-        ;
-
-        int length = log.length();
-
-
-        // %
-        if (percentage != null) {
-            log
-                    .append(val.format(percentage))
-                    .append("%")
-            ;
-            log.append(" ");
-        }
-
-        // val
-        log.append(String.valueOf(value));
-
-        if (value != delta) {
-            log.append("(");
-
-            if (deltaPercentage != null) {
-                log
-                        .append(val.format(deltaPercentage))
-                        .append("% ")
-                ;
-            }
-            log
-                    .append(delta > 0 ? "+" : "")
-                    .append(String.valueOf(delta))
-                    .append(")")
-            ;
-        }
-
-
-        log.append(";");
-
-
-        int currentLength = log.length() - length;
-
-        if (currentLength < logLength) {
-            log.append(StringUtils.repeat(" ", logLength - currentLength));
-        }
-
-        if (logLength < currentLength) {
-            logLength = currentLength;
-        }
-
-        log.append("  ");
-
-        return logLength;
-    }
 
     private int logValue(int logLength, int value, String name) {
 
@@ -707,7 +589,7 @@ public class PerformanceMeasurer {
         return stepDuration.get() != 0;
     }
 
-    public static class Sensor {
+    public class Sensor {
 
         private String name;
         private LongAdder sensor;
@@ -745,6 +627,90 @@ public class PerformanceMeasurer {
 
         private long take() {
             return sensor.sum();
+        }
+
+        private void logPercentage(PerformanceMeasurer measurerOld, Sensor sensorOld) {
+            long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
+            float percent = (float) take() * 100 / summarySensor.take();
+            float deltaPercent = (float) (take() - sensorOld.take()) * 100 / deltaSummary;
+
+            logValue(
+                    sensorOld.logLength,
+                    name,
+                    take(),
+                    percent,
+                    take() - sensorOld.take(),
+                    deltaPercent
+            );
+        }
+
+        private void log(Sensor sensorOld) {
+            logValue(
+                    sensorOld.logLength,
+                    name,
+                    take(),
+                    null,
+                    take() - sensorOld.take(),
+                    null
+            );
+        }
+
+        private void logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
+            DecimalFormat val = new DecimalFormat("0");
+
+            log
+                    .append(name)
+                    .append(": ")
+            ;
+
+            int length = log.length();
+
+
+            // %
+            if (percentage != null) {
+                log
+                        .append(val.format(percentage))
+                        .append("%")
+                ;
+                log.append(" ");
+            }
+
+            // val
+            log.append(String.valueOf(value));
+
+            if (value != delta) {
+                log.append("(");
+
+                if (deltaPercentage != null) {
+                    log
+                            .append(val.format(deltaPercentage))
+                            .append("% ")
+                    ;
+                }
+                log
+                        .append(delta > 0 ? "+" : "")
+                        .append(String.valueOf(delta))
+                        .append(")")
+                ;
+            }
+
+
+            log.append(";");
+
+
+            int currentLength = log.length() - length;
+
+            if (currentLength < logLength) {
+                log.append(StringUtils.repeat(" ", logLength - currentLength));
+            }
+
+            if (logLength < currentLength) {
+                logLength = currentLength;
+            }
+
+            log.append("  ");
+
+            this.logLength = logLength;
         }
     }
 }
