@@ -357,7 +357,7 @@ public class PerformanceMeasurer {
     }
 
     private void logCommon(PerformanceMeasurer measurerOld) {
-        int notIsolated = 0;
+        int notIsolated = 0; //todo flag
         for (Sensor sensor : sensors.values()) {
             if (sensor.take() != 0 && !sensor.isolated) {
                 notIsolated++;
@@ -530,6 +530,20 @@ public class PerformanceMeasurer {
 
         log.append(";");
 
+        if (value == delta) {
+            if (percentage != null) { //not deltaPercentage
+                log
+                        .append(
+                                StringUtils.repeat(" ", String.valueOf(val.format(percentage)).length())
+                        )
+                        .append(StringUtils.repeat(" ", 2)); // _%
+            }
+            log
+                    .append(
+                            StringUtils.repeat(" ", String.valueOf(value).length())
+                    )
+                    .append(StringUtils.repeat(" ", 3)); // (+)
+        }
 
         int currentLength = log.length() - length;
 
