@@ -379,6 +379,22 @@ public class PerformanceMeasurer {
         return take != measurerOld.take();
     }
 
+    private boolean isForecastCompleted() {
+
+        if (possibleSize != 0) {
+            // all sensors forecast
+            return summarySensor.take() >= possibleSize;
+        } else {
+            // exact sensor forecast
+            for (Sensor sensor : sensors.values()) {
+                if (sensor.possibleSize != 0) {
+                    return sensor.take() >= sensor.possibleSize;
+                }
+            }
+            return false;
+        }
+    }
+
     private String log() {
         log = new StringBuffer();
 
@@ -576,7 +592,7 @@ public class PerformanceMeasurer {
 
         log.append(";");
 
-        if (value == delta) {
+        if (value == delta && !isForecastCompleted()) {
             if (percentage != null) { //not deltaPercentage
                 log
                         .append(
