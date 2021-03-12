@@ -48,22 +48,22 @@ public class PerformanceMeasurer {
 
     private Logger logger;
     private Priority priority;
+    private StringBuffer log;
+
     private String name;
     private Map<String, Sensor> sensors;
     private int possibleSize;
     private long startTime;
-
     private ThreadLocal<Long> stepStartTime;
     private AtomicLong stepDuration;
 
     // not state
     private long currentTime;
     private long allDuration;
-    private long momentDuration;
+    //    private long momentDuration;
     private Sensor summarySensor;
     private Sensor throughputSensor;
     private Sensor throughputMomentSensor;
-    private StringBuffer log;
 
     static {
         PerformanceMeasurer.addShutdownHook();
@@ -203,19 +203,24 @@ public class PerformanceMeasurer {
 
     private PerformanceMeasurer(PerformanceMeasurer other) {
         this.logger = other.logger;
+        this.priority = other.priority;
         this.name = other.name;
-        this.sensors = other.sensors;
         this.possibleSize = other.possibleSize;
         this.startTime = other.startTime;
-        this.stepStartTime = other.stepStartTime;
+        this.log = other.log;
+
+        //update after cloning
         this.stepDuration = other.stepDuration;
+        this.stepStartTime = other.stepStartTime;
+        this.sensors = other.sensors;
+
+        //not state
+        this.currentTime = other.currentTime;
         this.allDuration = other.allDuration;
-        this.momentDuration = other.momentDuration;
+//        this.momentDuration = other.momentDuration;
         this.summarySensor = other.summarySensor;
         this.throughputSensor = other.throughputSensor;
         this.throughputMomentSensor = other.throughputMomentSensor;
-        this.log = other.log;
-        this.currentTime = other.currentTime;
     }
 
     private PerformanceMeasurer newClone() {
@@ -224,7 +229,7 @@ public class PerformanceMeasurer {
         clone.stepStartTime = new ThreadLocal<>();
         clone.stepStartTime.set(stepStartTime.get());
 
-        clone.stepDuration = new AtomicLong(stepDuration.get());
+        clone.stepDuration = new AtomicLong(stepDuration.get()); //todo atomic -> adder
 
         clone.sensors = new HashMap<>();
         for (Map.Entry<String, Sensor> entry : sensors.entrySet()) {
@@ -246,10 +251,6 @@ public class PerformanceMeasurer {
 
         // snapshot - cloning
         PerformanceMeasurer measurer = this.newClone();
-
-
-        // time snapshot
-        measurer.timeSnapshot();
 
 
         // init previous
@@ -279,12 +280,14 @@ public class PerformanceMeasurer {
         return sensors.computeIfAbsent(name, k -> new Sensor(name));
     }
 
-    private void timeSnapshot() {
-        currentTime = System.currentTimeMillis();
-    }
-
     @SuppressWarnings("Convert2streamapi")
     private void makeSummary(PerformanceMeasurer measurerOld) {
+
+        // time snapshot
+        currentTime = System.currentTimeMillis();
+
+
+        long momentDuration;
 
         if (hasPersonalTimer()) {
             allDuration = stepDuration.get();
@@ -300,6 +303,7 @@ public class PerformanceMeasurer {
         }
         if (allDuration == 0) allDuration = 1;
 
+
         summarySensor = new Sensor("sum");
         for (Sensor sensor : sensors.values()) {
 
@@ -307,8 +311,11 @@ public class PerformanceMeasurer {
                 summarySensor.measure(sensor.take());
             }
         }
+
+
         throughputSensor = new Sensor("r/s");
         throughputSensor.measure((int) ((summarySensor.take() * 1000) / allDuration));
+
 
         throughputMomentSensor = new Sensor("r/s/i");
         throughputMomentSensor.measure((int) (((summarySensor.take() - measurerOld.summarySensor.take()) * 1000) / momentDuration));
@@ -429,21 +436,21 @@ public class PerformanceMeasurer {
         if (percent == 0 && leftTime == 0) {
             logValue("   ∞    ");
         } else if (percent == 100) {
-            if (measurerOld.summarySensor.take() != 0) {
+            if (measurerOld.summarySensor.isUpdated()) {
                 logValue("   .    ");
             }
         } else {
             logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
-        if (percent != 100 || measurerOld.summarySensor.take() != 0) {
+        if (percent != 100 || measurerOld.summarySensor.isUpdated()) {
             logValue(4, (int) percent, "%");
         }
     }
 
     private void logThroughout(PerformanceMeasurer measurerOld) {
 
-        if (summarySensor.take() != 0) { //except isolated
+        if (summarySensor.isUpdated()) { //except isolated
             log(throughputSensor, measurerOld.throughputSensor);
         }
     }
@@ -451,7 +458,7 @@ public class PerformanceMeasurer {
 
     private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
 
-        if (summarySensor.take() != 0) {
+        if (summarySensor.isUpdated()) {
             log(throughputMomentSensor, measurerOld.throughputMomentSensor);
         }
     }
@@ -531,6 +538,7 @@ public class PerformanceMeasurer {
 
         log.append(";");
 
+        //todo possibleSize & percentage from logForecast
         if (value == delta) {
             if (percentage != null) { //not deltaPercentage
                 log
@@ -712,10 +720,12 @@ public class PerformanceMeasurer {
 
         private Sensor(Sensor other) {
             this.name = other.name;
-            this.sensor = other.sensor;
             this.isolated = other.isolated;
             this.possibleSize = other.possibleSize;
             this.logLength = other.logLength;
+
+            //clone
+            this.sensor = other.sensor;
         }
 
         private Sensor newClone() {
@@ -735,6 +745,10 @@ public class PerformanceMeasurer {
 
         private long take() {
             return sensor.sum();
+        }
+
+        private boolean isUpdated() {
+            return sensor.sum() != 0;
         }
     }
 }
