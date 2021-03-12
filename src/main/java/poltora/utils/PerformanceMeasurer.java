@@ -196,9 +196,10 @@ public class PerformanceMeasurer {
         sensors = new ConcurrentHashMap<>();
 
 
-        summarySensor = new Sensor("sum");
-        throughputSensor = new Sensor("r/s");
-        throughputMomentSensor = new Sensor("r/s/i");
+        // outside sensor list
+        summarySensor = Sensor.getInstance("sum");
+        throughputSensor = Sensor.getInstance("r/s");
+        throughputMomentSensor = Sensor.getInstance("r/s/i");
     }
 
     private PerformanceMeasurer(PerformanceMeasurer other) {
@@ -209,6 +210,10 @@ public class PerformanceMeasurer {
         this.startTime = other.startTime;
         this.log = other.log;
 
+        this.summarySensor = other.summarySensor;
+        this.throughputSensor = other.throughputSensor;
+        this.throughputMomentSensor = other.throughputMomentSensor;
+
         //update after cloning
         this.stepDuration = other.stepDuration;
         this.stepStartTime = other.stepStartTime;
@@ -218,9 +223,6 @@ public class PerformanceMeasurer {
         this.currentTime = other.currentTime;
         this.allDuration = other.allDuration;
 //        this.momentDuration = other.momentDuration;
-        this.summarySensor = other.summarySensor;
-        this.throughputSensor = other.throughputSensor;
-        this.throughputMomentSensor = other.throughputMomentSensor;
     }
 
     private PerformanceMeasurer newClone() {
@@ -239,6 +241,10 @@ public class PerformanceMeasurer {
             );
         }
 
+
+        clone.summarySensor = summarySensor.newClone();
+        clone.throughputSensor = throughputSensor.newClone();
+        clone.throughputMomentSensor = throughputMomentSensor.newClone();
 
         return clone;
     }
@@ -269,7 +275,7 @@ public class PerformanceMeasurer {
 
         // log
         logger.log(priority,
-                measurer.log(measurerOld)
+                measurer.log()
         );
 
 
@@ -277,7 +283,7 @@ public class PerformanceMeasurer {
     }
 
     private Sensor getSensor(String name) {
-        return sensors.computeIfAbsent(name, k -> new Sensor(name));
+        return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name));
     }
 
     @SuppressWarnings("Convert2streamapi")
@@ -304,21 +310,22 @@ public class PerformanceMeasurer {
         if (allDuration == 0) allDuration = 1;
 
 
-        summarySensor = new Sensor("sum");
+        summarySensor.reset(); //history
         for (Sensor sensor : sensors.values()) {
 
             if (!sensor.isolated) {
                 summarySensor.measure(sensor.take());
+//                summarySensor.measure(sensor.take() - sensor.history.take());
             }
         }
 
 
-        throughputSensor = new Sensor("r/s");
+        throughputSensor.reset();
         throughputSensor.measure((int) ((summarySensor.take() * 1000) / allDuration));
 
 
-        throughputMomentSensor = new Sensor("r/s/i");
-        throughputMomentSensor.measure((int) (((summarySensor.take() - measurerOld.summarySensor.take()) * 1000) / momentDuration));
+        throughputMomentSensor.reset();
+        throughputMomentSensor.measure((int) (((summarySensor.take() - summarySensor.history.take()) * 1000) / momentDuration));
     }
 
 
@@ -372,7 +379,7 @@ public class PerformanceMeasurer {
         return take != measurerOld.take();
     }
 
-    private String log(PerformanceMeasurer measurerOld) {
+    private String log() {
         log = new StringBuffer();
 
 
@@ -381,62 +388,59 @@ public class PerformanceMeasurer {
 
         logValue(DurationFormatUtils.formatDuration(allDuration, "HH:mm:ss"));
 
-        logForecast(measurerOld);
+        logForecast();
 
-        logThroughout(measurerOld);
+        logThroughout();
 
-        logThroughoutMoment(measurerOld);
+        logThroughoutMoment();
 
-        logCommon(measurerOld);
+        logCommon();
 
-        logIsolated(measurerOld);
+        logIsolated();
 
 
         return log.toString();
     }
 
-    private void logCommon(PerformanceMeasurer measurerOld) {
+    private void logCommon() {
         if (startedCommonSensors() > 1) {
-            logSeveralCommon(measurerOld);
+            logSeveralCommon();
         } else {
-            logOneCommon(measurerOld);
+            logOneCommon();
         }
     }
 
-    private void logOneCommon(PerformanceMeasurer measurerOld) {
+    private void logOneCommon() {
         for (Sensor sensor : sensors.values()) {
             if (sensor.isolated) continue;
 
 
-            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-            log(sensor, sensorOld);
+            log(sensor);
         }
     }
 
-    private void logSeveralCommon(PerformanceMeasurer measurerOld) {
+    private void logSeveralCommon() {
         for (Sensor sensor : sensors.values()) {
             if (sensor.isolated) continue;
 
 
-            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-            log(measurerOld, sensor, sensorOld);
+            logPercent(sensor);
         }
 
-        log(summarySensor, measurerOld.summarySensor);
+        log(summarySensor);
     }
 
-    private void logIsolated(PerformanceMeasurer measurerOld) {
+    private void logIsolated() {
 
         for (Sensor sensor : sensors.values()) {
             if (!sensor.isolated) continue;
 
 
-            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-            log(sensor, sensorOld);
+            log(sensor);
         }
     }
 
-    private void logForecast(PerformanceMeasurer measurerOld) {
+    private void logForecast() {
 
         long count = 0;
         long size = 0;
@@ -470,42 +474,42 @@ public class PerformanceMeasurer {
         if (percent == 0 && leftTime == 0) {
             logValue("   ∞    ");
         } else if (percent == 100) {
-            if (measurerOld.summarySensor.isStarted()) {
+            if (summarySensor.history.isStarted()) {
                 logValue("   .    ");
             }
         } else {
             logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
-        if (percent != 100 || measurerOld.summarySensor.isStarted()) {
+        if (percent != 100 || summarySensor.history.isStarted()) {
             logValue(4, (int) percent, "%");
         }
     }
 
-    private void logThroughout(PerformanceMeasurer measurerOld) {
+    private void logThroughout() {
 
         if (summarySensor.isStarted()) { //except isolated
-            log(throughputSensor, measurerOld.throughputSensor);
+            log(throughputSensor);
         }
     }
 
 
-    private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
+    private void logThroughoutMoment() {
 
         if (summarySensor.isStarted()) {
-            log(throughputMomentSensor, measurerOld.throughputMomentSensor);
+            log(throughputMomentSensor);
         }
     }
 
-    private void log(PerformanceMeasurer measurerOld, Sensor sensor, Sensor sensorOld) {
-        long delta = sensor.take() - sensorOld.take();
+    private void logPercent(Sensor sensor) {
+        long delta = sensor.take() - sensor.history.take();
         float percent = (float) sensor.take() * 100 / summarySensor.take();
-        long deltaSummary = summarySensor.take() - measurerOld.summarySensor.take();
+        long deltaSummary = summarySensor.take() - summarySensor.history.take();
         float deltaPercent = (float) delta * 100 / deltaSummary;
 
         int logLength;
         logLength = logValue(
-                sensorOld.logLength,
+                sensor.history.logLength,
                 sensor.name,
                 sensor.take(),
                 percent,
@@ -515,14 +519,14 @@ public class PerformanceMeasurer {
         sensor.logLength = logLength;
     }
 
-    private void log(Sensor sensor, Sensor sensorOld) {
+    private void log(Sensor sensor) {
         int logLength;
         logLength = logValue(
-                sensorOld.logLength,
+                sensor.history.logLength,
                 sensor.name,
                 sensor.take(),
                 null,
-                sensor.take() - sensorOld.take(),
+                sensor.take() - sensor.history.take(),
                 null
         );
 
@@ -572,7 +576,6 @@ public class PerformanceMeasurer {
 
         log.append(";");
 
-        //todo possibleSize & percentage from logForecast
         if (value == delta) {
             if (percentage != null) { //not deltaPercentage
                 log
@@ -739,13 +742,21 @@ public class PerformanceMeasurer {
         return stepDuration.get() != 0;
     }
 
-    public class Sensor {
+    public static class Sensor {
 
         private String name;
         private LongAdder sensor;
         private boolean isolated;
         private long possibleSize;
         private int logLength;
+        private Sensor history;
+
+        private static Sensor getInstance(String name) {
+            Sensor sensor = new Sensor(name);
+            sensor.history = new Sensor("DUMMY");
+
+            return sensor;
+        }
 
         private Sensor(String name) {
             this.name = name;
@@ -758,6 +769,9 @@ public class PerformanceMeasurer {
             this.possibleSize = other.possibleSize;
             this.logLength = other.logLength;
 
+            //
+            this.history = other.history;
+
             //clone
             this.sensor = other.sensor;
         }
@@ -766,6 +780,10 @@ public class PerformanceMeasurer {
             Sensor clone = new Sensor(this);
             clone.sensor = new LongAdder();
             clone.sensor.add(sensor.sum());
+
+            this.history = clone;
+            if (clone.history != null) clone.history.history = null;
+
             return clone;
         }
 
@@ -779,6 +797,10 @@ public class PerformanceMeasurer {
 
         private long take() {
             return sensor.sum();
+        }
+
+        private void reset() {
+            sensor.reset();
         }
 
         private boolean isStarted() {
