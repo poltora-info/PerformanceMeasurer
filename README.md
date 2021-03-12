@@ -62,11 +62,11 @@ for (Merchandise merchandise : merchandiseList) {
 #### Result
 
 ```shell
-c.d.import.MerchandiseImport 00:00:15 00:00:15 49%   r/s: 16;  fail: 35% 86;  success: 34% 83;  error: 31% 77;  sum: 246;
-c.d.import.MerchandiseImport 00:00:29 00:00:12 70%   r/s: 11(-5);  fail: 34% 121(+35);  success: 34% 120(+37);  error: 31% 110(+33);  sum: 351(+105);
-c.d.import.MerchandiseImport 00:00:44 00:00:07 86%   r/s: 9(-2);   fail: 35% 151(+30);  success: 34% 145(+25);  error: 31% 135(+25);  sum: 431(+80); 
-c.d.import.MerchandiseImport 00:00:59 00:00:00 99%   r/s: 8(-1);   fail: 35% 175(+24);  success: 34% 166(+21);  error: 31% 154(+19);  sum: 495(+64); 
-c.d.import.MerchandiseImport 00:01:01    .     100%  r/s: 8(0);    fail: 36% 178(+3);   success: 33% 167(+1);   error: 31% 155(+1);   sum: 500(+5);  
+[c.d.import.MerchandiseImport] 00:00:12 00:00:14 45%  r/s: 18;       r/s/i: 18;       fail: 36% 82;           success: 33% 75;           error: 31% 72;           sum: 229;        
+[c.d.import.MerchandiseImport] 00:00:27 00:00:12 68%  r/s: 12(-6);   r/s/i: 7(-11);   fail: 37% 126(39% +44);  success: 32% 111(32% +36);  error: 31% 106(30% +34);  sum: 343(+114);  
+[c.d.import.MerchandiseImport] 00:00:42 00:00:08 84%  r/s: 9(-3);    r/s/i: 5(-2);    fail: 35% 149(30% +23);  success: 34% 141(39% +30);  error: 31% 130(31% +24);  sum: 420(+77);   
+[c.d.import.MerchandiseImport] 00:00:57 00:00:01 98%  r/s: 8(-1);    r/s/i: 4(-1);    fail: 37% 179(43% +30);  success: 32% 156(21% +15);  error: 32% 155(36% +25);  sum: 490(+70);   
+[c.d.import.MerchandiseImport] 00:01:01    .     100% r/s: 8(0);     r/s/i: 2(-2);    fail: 37% 183(40% +4);   success: 32% 160(40% +4);   error: 31% 157(20% +2);   sum: 500(+10);   
 ```
 
 ### Progress measuring by isolated criterion
@@ -118,13 +118,11 @@ for (Shop shop : shopList) {
 #### Result
 
 ```shell
-c.d.import.MerchandiseImport 00:00:03    ∞     0%    r/s: 8;  fail: 33% 10;  success: 30% 9;  error: 37% 11;  sum: 30;  shop: 0;
-c.d.import.MerchandiseImport 00:00:18 00:01:14 20%   r/s: 8(0);  fail: 36% 54(+44);  success: 37% 55(+46);  error: 27% 41(+30);  sum: 150(+120);  shop: 1;
-c.d.import.MerchandiseImport 00:00:33 00:00:50 40%   r/s: 8(0);  fail: 35% 95(+41);  success: 35% 96(+41);  error: 30% 81(+40);  sum: 272(+122);  shop: 2(+1);
-c.d.import.MerchandiseImport 00:00:48 00:00:32 60%   r/s: 7(-1);  fail: 37% 143(+48);  success: 34% 130(+34);  error: 29% 109(+28);  sum: 382(+110);  shop: 3(+1);
-c.d.import.MerchandiseImport 00:01:03 00:00:15 80%   r/s: 7(0);   fail: 36% 179(+36);  success: 33% 164(+34);  error: 31% 154(+45);  sum: 497(+115);  shop: 4(+1);
-c.d.import.MerchandiseImport 00:01:18    .     100%  r/s: 6(-1);  fail: 36% 180(+1);   success: 33% 165(+1);   error: 31% 155(+1);   sum: 500(+3);    shop: 5(+1);
-
+[c.d.import.MerchandiseImport] 00:00:06    ∞     0%   r/s: 8;      r/s/i: 8;      fail: 39% 21;           success: 26% 14;           error: 35% 19;           sum: 54;       shop: 0;      
+[c.d.import.MerchandiseImport] 00:00:21 00:01:26 20%  r/s: 7(-1);  r/s/i: 7(-1);  fail: 31% 53(28% +32);  success: 28% 48(29% +34);  error: 41% 69(43% +50);  sum: 170(+116);  shop: 1;      
+[c.d.import.MerchandiseImport] 00:00:36 00:00:54 40%  r/s: 7(0);   r/s/i: 7(0);   fail: 33% 94(35% +41);  success: 31% 90(36% +42);  error: 36% 102(28% +33);  sum: 286(+116);  shop: 2(+1);  
+[c.d.import.MerchandiseImport] 00:00:51 00:00:12 80%  r/s: 7(0);   r/s/i: 7(0);   fail: 35% 139(39% +45);  success: 30% 122(28% +32);  error: 35% 141(34% +39);  sum: 402(+116);  shop: 4(+2);  
+[c.d.import.MerchandiseImport] 00:01:06    .     100% r/s: 7(0);   r/s/i: 6(-1);  fail: 33% 167(29% +28);  success: 31% 156(35% +34);  error: 35% 177(37% +36);  sum: 500(+98);   shop: 5(+1);  
 ```
 
 ### HTTP status code measuring
@@ -150,11 +148,11 @@ if (httpStatusCode >= 100 && httpStatusCode < 200) {
 #### Result
 
 ```shell
-c.d.h.HttpStatusCode 00:00:15  r/s: 15;  Redirection: 16% 38;  Server Error: 21% 51;  Client Error: 19% 45;  Informational: 18% 43;  Success: 26% 61;  sum: 238;
-c.d.h.HttpStatusCode 00:00:29  r/s: 11(-4);  Redirection: 16% 54(+16);  Server Error: 23% 77(+26);  Client Error: 21% 71(+26);  Informational: 18% 61(+18);  Success: 23% 78(+17);  sum: 341(+103);
-c.d.h.HttpStatusCode 00:00:44  r/s: 9(-2);   Redirection: 18% 73(+19);  Server Error: 21% 86(+9);   Client Error: 22% 90(+19);  Informational: 18% 73(+12);  Success: 23% 95(+17);  sum: 417(+76); 
-c.d.h.HttpStatusCode 00:00:59  r/s: 7(-2);   Redirection: 19% 89(+16);  Server Error: 20% 95(+9);   Client Error: 22% 103(+13);  Informational: 17% 83(+10);  Success: 22% 106(+11);  sum: 476(+59); 
-c.d.h.HttpStatusCode 00:01:06  r/s: 7(0);    Redirection: 19% 96(+7);   Server Error: 20% 99(+4);   Client Error: 22% 111(+8);   Informational: 17% 86(+3);   Success: 22% 108(+2);   sum: 500(+24); 
+[c.d.h.HttpStatusCode] 00:00:13 r/s: 16;       r/s/i: 16;       Redirection: 20% 46;           Server Error: 25% 58;           Client Error: 20% 47;           Informational: 17% 40;           Success: 18% 41;           sum: 232;        
+[c.d.h.HttpStatusCode] 00:00:28 r/s: 11(-5);   r/s/i: 6(-10);   Redirection: 20% 67(22% +21);  Server Error: 23% 74(17% +16);  Client Error: 22% 73(27% +26);  Informational: 16% 54(15% +14);  Success: 18% 60(20% +19);  sum: 328(+96);   
+[c.d.h.HttpStatusCode] 00:00:43 r/s: 9(-2);    r/s/i: 5(-1);    Redirection: 20% 80(17% +13);  Server Error: 22% 88(19% +14);  Client Error: 22% 88(20% +15);  Informational: 19% 75(28% +21);  Success: 18% 72(16% +12);  sum: 403(+75);   
+[c.d.h.HttpStatusCode] 00:00:58 r/s: 8(-1);    r/s/i: 4(-1);    Redirection: 20% 94(19% +14);  Server Error: 21% 100(17% +12);  Client Error: 21% 102(19% +14);  Informational: 19% 92(24% +17);  Success: 18% 87(21% +15);  sum: 475(+72);   
+[c.d.h.HttpStatusCode] 00:01:13 r/s: 6(-2);    r/s/i: 1(-3);    Redirection: 20% 99(20% +5);   Server Error: 21% 106(24% +6);   Client Error: 21% 106(16% +4);   Informational: 19% 97(20% +5);   Success: 18% 92(20% +5);   sum: 500(+25);   
 ```
 
 ### Throughput of exact code
@@ -203,11 +201,11 @@ private boolean downloadAndSavePage(String url) {
 #### Result
 
 ```bash
-c.d.h.HttpStatusCode (personal) 00:00:01  r/s: 159;  Redirection: 20% 51;  Server Error: 24% 61;  Client Error: 19% 48;  Informational: 17% 42;  Success: 19% 47;  sum: 249;
-c.d.h.HttpStatusCode (personal) 00:00:03  r/s: 112(-47);  Redirection: 21% 73(+22);  Server Error: 25% 88(+27);  Client Error: 18% 63(+15);  Informational: 18% 62(+20);  Success: 18% 64(+17);  sum: 350(+101);
-c.d.h.HttpStatusCode (personal) 00:00:04  r/s: 92(-20);   Redirection: 20% 86(+13);  Server Error: 24% 104(+16);  Client Error: 19% 82(+19);  Informational: 19% 79(+17);  Success: 18% 75(+11);  sum: 426(+76); 
-c.d.h.HttpStatusCode (personal) 00:00:06  r/s: 78(-14);   Redirection: 20% 97(+11);  Server Error: 24% 114(+10);  Client Error: 20% 98(+16);  Informational: 19% 90(+11);  Success: 18% 85(+10);  sum: 484(+58); 
-c.d.h.HttpStatusCode (personal) 00:00:06  r/s: 78(0);     Redirection: 19% 97(0);    Server Error: 23% 116(+2);   Client Error: 21% 103(+5);  Informational: 19% 95(+5);   Success: 18% 89(+4);   sum: 500(+16); 
+[c.d.h.HttpStatusCode] (personal) 00:00:01 r/s: 157;        r/s/i: 0;      Redirection: 21% 50;           Server Error: 21% 50;           Informational: 22% 54;           Client Error: 19% 45;           Success: 18% 44;           sum: 243;        
+[c.d.h.HttpStatusCode] (personal) 00:00:03 r/s: 111(-46);   r/s/i: 0;      Redirection: 20% 69(19% +19);  Server Error: 21% 72(22% +22);  Informational: 20% 68(14% +14);  Client Error: 21% 72(27% +27);  Success: 18% 61(17% +17);  sum: 342(+99);   
+[c.d.h.HttpStatusCode] (personal) 00:00:04 r/s: 90(-21);    r/s/i: 0;      Redirection: 21% 86(22% +17);  Server Error: 21% 88(21% +16);  Informational: 19% 80(16% +12);  Client Error: 21% 88(21% +16);  Success: 18% 77(21% +16);  sum: 419(+77);   
+[c.d.h.HttpStatusCode] (personal) 00:00:06 r/s: 81(-9);     r/s/i: 0;      Redirection: 22% 107(28% +21);  Server Error: 21% 104(21% +16);  Informational: 18% 91(15% +11);  Client Error: 21% 105(23% +17);  Success: 18% 87(13% +10);  sum: 494(+75);   
+[c.d.h.HttpStatusCode] (personal) 00:00:06 r/s: 80(-1);     r/s/i: 0;      Redirection: 22% 108(17% +1);   Server Error: 21% 106(33% +2);   Informational: 18% 92(17% +1);   Client Error: 21% 106(17% +1);   Success: 18% 88(17% +1);   sum: 500(+6);    
 ```
 
 ## Licensing
