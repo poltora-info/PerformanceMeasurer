@@ -330,6 +330,38 @@ public class PerformanceMeasurer {
         return sum;
     }
 
+    private int startedSensors() {
+        int number = 0;
+        for (Sensor sensor : sensors.values()) {
+            if (sensor.isStarted()) {
+                number++;
+            }
+        }
+        return number;
+    }
+
+    private int startedCommonSensors() {
+        int number = 0;
+        for (Sensor sensor : sensors.values()) {
+            if (!sensor.isolated && sensor.isStarted()) {
+                number++;
+            }
+        }
+        return number;
+    }
+
+    private int updatedSensors(PerformanceMeasurer measurerOld) { //todo link to previous (null pre-pre-vious)
+        int number = 0;
+        for (Sensor sensor : sensors.values()) {
+            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
+
+            if (sensor.take() != sensorOld.take()) {
+                number++;
+            }
+        }
+        return number;
+    }
+
     @SuppressWarnings("SimplifiableIfStatement")
     private boolean isUpdated(PerformanceMeasurer measurerOld) {
         int take = this.take();
@@ -364,30 +396,33 @@ public class PerformanceMeasurer {
     }
 
     private void logCommon(PerformanceMeasurer measurerOld) {
-        int notIsolated = 0; //todo flag
-        for (Sensor sensor : sensors.values()) {
-            if (sensor.take() != 0 && !sensor.isolated) {
-                notIsolated++;
-            }
+        if (startedCommonSensors() > 1) {
+            logSeveralCommon(measurerOld);
+        } else {
+            logOneCommon(measurerOld);
         }
+    }
 
+    private void logOneCommon(PerformanceMeasurer measurerOld) {
         for (Sensor sensor : sensors.values()) {
             if (sensor.isolated) continue;
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
+            log(sensor, sensorOld);
+        }
+    }
+
+    private void logSeveralCommon(PerformanceMeasurer measurerOld) {
+        for (Sensor sensor : sensors.values()) {
+            if (sensor.isolated) continue;
 
 
-            if (notIsolated > 1) {
-                log(measurerOld, sensor, sensorOld);
-            } else {
-                log(sensor, sensorOld);
-            }
+            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
+            log(measurerOld, sensor, sensorOld);
         }
 
-        if (notIsolated > 1) {
-            log(summarySensor, measurerOld.summarySensor);
-        }
+        log(summarySensor, measurerOld.summarySensor);
     }
 
     private void logIsolated(PerformanceMeasurer measurerOld) {
@@ -397,7 +432,6 @@ public class PerformanceMeasurer {
 
 
             Sensor sensorOld = measurerOld.sensors.get(sensor.name);
-
             log(sensor, sensorOld);
         }
     }
@@ -436,21 +470,21 @@ public class PerformanceMeasurer {
         if (percent == 0 && leftTime == 0) {
             logValue("   ∞    ");
         } else if (percent == 100) {
-            if (measurerOld.summarySensor.isUpdated()) {
+            if (measurerOld.summarySensor.isStarted()) {
                 logValue("   .    ");
             }
         } else {
             logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
-        if (percent != 100 || measurerOld.summarySensor.isUpdated()) {
+        if (percent != 100 || measurerOld.summarySensor.isStarted()) {
             logValue(4, (int) percent, "%");
         }
     }
 
     private void logThroughout(PerformanceMeasurer measurerOld) {
 
-        if (summarySensor.isUpdated()) { //except isolated
+        if (summarySensor.isStarted()) { //except isolated
             log(throughputSensor, measurerOld.throughputSensor);
         }
     }
@@ -458,7 +492,7 @@ public class PerformanceMeasurer {
 
     private void logThroughoutMoment(PerformanceMeasurer measurerOld) {
 
-        if (summarySensor.isUpdated()) {
+        if (summarySensor.isStarted()) {
             log(throughputMomentSensor, measurerOld.throughputMomentSensor);
         }
     }
@@ -747,7 +781,7 @@ public class PerformanceMeasurer {
             return sensor.sum();
         }
 
-        private boolean isUpdated() {
+        private boolean isStarted() {
             return sensor.sum() != 0;
         }
     }
