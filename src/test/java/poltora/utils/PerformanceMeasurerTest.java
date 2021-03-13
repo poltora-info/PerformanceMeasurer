@@ -105,7 +105,6 @@ public class PerformanceMeasurerTest {
     }
 
 
-
     @Test
     public void progressByIsolatedInfinite() throws Exception {
 
@@ -217,6 +216,20 @@ public class PerformanceMeasurerTest {
             } else if (rnd == 3) {
                 PerformanceMeasurer.getByMethodName().measure("isolated");
             }
+
+            // internal work
+            Thread.sleep(nextInt(i));
+        }
+    }
+
+    @Test
+    public void onlyIsolated() throws Exception {
+
+        PerformanceMeasurer.getByMethodName().setIsolated("isolated");
+
+        for (int i = 1; i <= 400; i++) {
+
+            PerformanceMeasurer.getByMethodName().measure("isolated");
 
             // internal work
             Thread.sleep(nextInt(i));

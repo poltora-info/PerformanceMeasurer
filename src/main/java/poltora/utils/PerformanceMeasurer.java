@@ -395,6 +395,14 @@ public class PerformanceMeasurer {
         }
     }
 
+    private boolean hasLogHistory() {
+        return summarySensor.history.isStarted();
+    }
+
+    private boolean isLogAtOnce() {
+        return isForecastCompleted() && !hasLogHistory();
+    }
+
     private String log() {
         log = new StringBuffer();
 
@@ -490,14 +498,14 @@ public class PerformanceMeasurer {
         if (percent == 0 && leftTime == 0) {
             logValue("   ∞    ");
         } else if (percent == 100) {
-            if (summarySensor.history.isStarted()) {
+            if (hasLogHistory()) {
                 logValue("   .    ");
             }
         } else {
             logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
-        if (percent != 100 || summarySensor.history.isStarted()) {
+        if (percent != 100 || hasLogHistory()) {
             logValue(4, (int) percent, "%");
         }
     }
@@ -512,7 +520,7 @@ public class PerformanceMeasurer {
 
     private void logThroughoutMoment() {
 
-        if (summarySensor.isStarted()) {
+        if (summarySensor.isStarted() && !isLogAtOnce()) {
             log(throughputMomentSensor);
         }
     }
