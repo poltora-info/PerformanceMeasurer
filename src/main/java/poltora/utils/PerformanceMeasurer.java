@@ -65,8 +65,10 @@ public class PerformanceMeasurer {
     private Sensor throughputSensor;
     private Sensor throughputMomentSensor;
 
-    // not state
-    private long allDuration;
+    // updated state
+    private long duration;
+    private float percent;
+    private long leftTime;
 
     static {
         PerformanceMeasurer.addShutdownHook();
@@ -210,6 +212,7 @@ public class PerformanceMeasurer {
         throughputMomentSensor = Sensor.getInstance("r/s/i");
     }
 
+    @SuppressWarnings("Convert2streamapi")
     private void snapshot() {
 
         for (Sensor sensor : sensors.values()) {
@@ -230,11 +233,11 @@ public class PerformanceMeasurer {
 
 
         if (hasPersonalTimer()) {
-            allDuration = stepDuration.get();
+            duration = stepDuration.get();
         } else {
-            allDuration = currentTime - startTime;
+            duration = currentTime - startTime;
         }
-        if (allDuration == 0) allDuration = 1;
+        if (duration == 0) duration = 1;
 
 
         summarySensor.reset(); //history
@@ -248,13 +251,38 @@ public class PerformanceMeasurer {
 
 
         throughputSensor.reset();
-        throughputSensor.measure((int) ((summarySensor.take() * 1000) / allDuration));
+        throughputSensor.measure((int) ((summarySensor.take() * 1000) / duration));
 
 
         throughputMomentSensor.reset();
         throughputMomentSensor.measure(
                 (int) (((summarySensor.take() - summarySensor.history.take()) * 1000) / TimeUnit.MILLISECONDS.convert(time, timeUnit))
         );
+
+
+        // percent & left time
+        long count = 0;
+        long size = 0;
+
+        if (possibleSize != 0) {
+            // all sensors forecast
+            count = summarySensor.take();
+            size = possibleSize;
+        } else {
+            // exact sensor forecast
+            for (Sensor sensor : sensors.values()) {
+                if (sensor.possibleSize != 0) {
+                    count = sensor.take();
+                    size = sensor.possibleSize;
+                    break;
+                }
+            }
+        }
+
+        if (count != 0) {
+            percent = (float) count * 100 / size;
+            leftTime = (((long) (duration / percent) * 100)) - duration;
+        }
     }
 
 
@@ -331,7 +359,7 @@ public class PerformanceMeasurer {
         if (hasPersonalTimer())
             log.append("(personal) ");
 
-        logValue(DurationFormatUtils.formatDuration(allDuration, "HH:mm:ss"));
+        logValue(DurationFormatUtils.formatDuration(duration, "HH:mm:ss"));
 
         logForecast();
 
@@ -355,6 +383,7 @@ public class PerformanceMeasurer {
         }
     }
 
+    @SuppressWarnings("Convert2streamapi")
     private void logOneCommon() {
         for (Sensor sensor : sensors.values()) {
             if (!sensor.isolated) {
@@ -363,6 +392,7 @@ public class PerformanceMeasurer {
         }
     }
 
+    @SuppressWarnings("Convert2streamapi")
     private void logSeveralCommon() {
         for (Sensor sensor : sensors.values()) {
             if (!sensor.isolated) {
@@ -373,6 +403,7 @@ public class PerformanceMeasurer {
         log(summarySensor);
     }
 
+    @SuppressWarnings("Convert2streamapi")
     private void logIsolated() {
         for (Sensor sensor : sensors.values()) {
             if (sensor.isolated) {
@@ -382,35 +413,6 @@ public class PerformanceMeasurer {
     }
 
     private void logForecast() {
-
-        long count = 0;
-        long size = 0;
-
-        if (possibleSize != 0) {
-            // all sensors forecast
-            count = summarySensor.take();
-            size = possibleSize;
-        } else {
-            // exact sensor forecast
-            for (Sensor sensor : sensors.values()) {
-                if (sensor.possibleSize != 0) {
-                    count = sensor.take();
-                    size = sensor.possibleSize;
-                    break;
-                }
-            }
-        }
-        if (size == 0) return;
-
-
-        float percent = 0;
-        long leftTime = 0;
-
-        if (count != 0) {
-            percent = (float) count * 100 / size;
-            leftTime = (((long) (allDuration / percent) * 100)) - allDuration;
-        }
-
 
         if (percent == 0 && leftTime == 0) {
             logValue("   ∞    ");
@@ -638,6 +640,7 @@ public class PerformanceMeasurer {
         getSensor(FAIL_NAME).measure(delta);
     }
 
+    @SuppressWarnings("unused")
     public void measureByClassName(int delta) {
 //        String className = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
         String className = Thread.currentThread().getStackTrace()[2].getClassName();
@@ -646,6 +649,7 @@ public class PerformanceMeasurer {
         getSensor(className).measure(delta);
     }
 
+    @SuppressWarnings("unused")
     public void measureByMethodName(int delta) {
         String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
 
