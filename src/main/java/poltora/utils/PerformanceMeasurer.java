@@ -21,7 +21,10 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,7 +44,6 @@ public class PerformanceMeasurer {
     private static final String FAIL_NAME = "fail";
     private static Logger LOGGER = Logger.getLogger(PerformanceMeasurer.class);
     private static Map<String, PerformanceMeasurer> measurers = new ConcurrentHashMap<>();
-    private static Map<String, PerformanceMeasurer> measurersOld = new ConcurrentHashMap<>();
     private static ScheduledExecutorService scheduler;
     private static int time = 15;
     private static TimeUnit timeUnit = TimeUnit.SECONDS;
@@ -57,13 +59,14 @@ public class PerformanceMeasurer {
     private ThreadLocal<Long> stepStartTime;
     private AtomicLong stepDuration;
 
-    // not state
     private long currentTime;
-    private long allDuration;
-    //    private long momentDuration;
+
     private Sensor summarySensor;
     private Sensor throughputSensor;
     private Sensor throughputMomentSensor;
+
+    // not state
+    private long allDuration;
 
     static {
         PerformanceMeasurer.addShutdownHook();
@@ -121,7 +124,6 @@ public class PerformanceMeasurer {
             if (measurer.currentTime != 0 && measurer.currentTime < curTime - maxSleepingTime) {
                 LOGGER.debug(String.format("Purging old measurers [%s]", measurer.name));
                 measurers.remove(measurer.name);
-                measurersOld.remove(measurer.name);
             }
         }
     }
@@ -138,16 +140,21 @@ public class PerformanceMeasurer {
             return startTime1 > startTime2 ? 1 : startTime1 < startTime2 ? -1 : 0;
         });
 
+
         for (Map.Entry<String, PerformanceMeasurer> entry : list) {
-            String name = entry.getKey();
             PerformanceMeasurer measurer = entry.getValue();
 
-            measurersOld.put(
-                    name,
-                    measurer.display(
-                            measurersOld.get(name)
-                    )
-            );
+            if (measurer.isUpdated()) {
+
+                measurer.makeSummary();
+
+                measurer.logger.log(
+                        measurer.priority,
+                        measurer.log()
+                );
+
+                measurer.snapshot();
+            }
         }
     }
 
@@ -182,6 +189,7 @@ public class PerformanceMeasurer {
     private PerformanceMeasurer(String name) {
         logger = Logger.getLogger(name);
         this.priority = Priority.INFO;
+
         this.name = name;
         startTime = System.currentTimeMillis();
 
@@ -202,110 +210,29 @@ public class PerformanceMeasurer {
         throughputMomentSensor = Sensor.getInstance("r/s/i");
     }
 
-    private PerformanceMeasurer(PerformanceMeasurer other) {
-        this.logger = other.logger;
-        this.priority = other.priority;
-        this.name = other.name;
-        this.possibleSize = other.possibleSize;
-        this.startTime = other.startTime;
-        this.log = other.log;
-
-        this.summarySensor = other.summarySensor;
-        this.throughputSensor = other.throughputSensor;
-        this.throughputMomentSensor = other.throughputMomentSensor;
-
-        //update after cloning
-        this.stepDuration = other.stepDuration;
-        this.stepStartTime = other.stepStartTime;
-        this.sensors = other.sensors;
-
-        //not state
-        this.currentTime = other.currentTime;
-        this.allDuration = other.allDuration;
-//        this.momentDuration = other.momentDuration;
-    }
-
-    private PerformanceMeasurer newClone() {
-
-        PerformanceMeasurer clone = new PerformanceMeasurer(this);
-        clone.stepStartTime = new ThreadLocal<>();
-        clone.stepStartTime.set(stepStartTime.get());
-
-        clone.stepDuration = new AtomicLong(stepDuration.get()); //todo atomic -> adder
-
-        clone.sensors = new HashMap<>();
-        for (Map.Entry<String, Sensor> entry : sensors.entrySet()) {
-            clone.sensors.put(
-                    entry.getKey(),
-                    entry.getValue().newClone()
-            );
-        }
-
-
-        clone.summarySensor = summarySensor.newClone();
-        clone.throughputSensor = throughputSensor.newClone();
-        clone.throughputMomentSensor = throughputMomentSensor.newClone();
-
-        return clone;
-    }
-
-    private PerformanceMeasurer display(PerformanceMeasurer measurerOld) {
-        if (!this.isUpdated(measurerOld)) {
-            return this.newClone();
-        }
-
-
-        // snapshot - cloning
-        PerformanceMeasurer measurer = this.newClone();
-
-
-        // init previous
-        if (measurerOld == null) {
-            measurerOld = new PerformanceMeasurer(name);
-        }
+    private void snapshot() {
 
         for (Sensor sensor : sensors.values()) {
-            measurerOld.getSensor(sensor.name);
+            sensor.newClone();
         }
 
 
-        // make summary
-        measurer.makeSummary(measurerOld);
-
-
-        // log
-        logger.log(priority,
-                measurer.log()
-        );
-
-
-        return measurer;
+        summarySensor.newClone();
+        throughputSensor.newClone();
+        throughputMomentSensor.newClone();
     }
 
-    private Sensor getSensor(String name) {
-        return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name));
-    }
 
     @SuppressWarnings("Convert2streamapi")
-    private void makeSummary(PerformanceMeasurer measurerOld) {
+    private void makeSummary() {
 
-        // time snapshot
         currentTime = System.currentTimeMillis();
 
 
-        long momentDuration;
-
         if (hasPersonalTimer()) {
             allDuration = stepDuration.get();
-            momentDuration = currentTime - stepStartTime.get();
         } else {
             allDuration = currentTime - startTime;
-
-            if (measurerOld.currentTime == 0) {
-                momentDuration = currentTime - startTime;
-            } else {
-                momentDuration = currentTime - measurerOld.currentTime;
-            }
         }
         if (allDuration == 0) allDuration = 1;
 
@@ -325,17 +252,11 @@ public class PerformanceMeasurer {
 
 
         throughputMomentSensor.reset();
-        throughputMomentSensor.measure((int) (((summarySensor.take() - summarySensor.history.take()) * 1000) / momentDuration));
+        throughputMomentSensor.measure(
+                (int) (((summarySensor.take() - summarySensor.history.take()) * 1000) / TimeUnit.MILLISECONDS.convert(time, timeUnit))
+        );
     }
 
-
-    private int take() {
-        int sum = 0;
-        for (Sensor sensor : sensors.values()) {
-            sum += sensor.take();
-        }
-        return sum;
-    }
 
     private int startedSensors() {
         int number = 0;
@@ -357,26 +278,25 @@ public class PerformanceMeasurer {
         return number;
     }
 
-    private int updatedSensors(PerformanceMeasurer measurerOld) { //todo link to previous (null pre-pre-vious)
+    private int updatedSensors() {
         int number = 0;
         for (Sensor sensor : sensors.values()) {
-            Sensor sensorOld = measurerOld.sensors.get(sensor.name);
 
-            if (sensor.take() != sensorOld.take()) {
+            if (sensor.take() != sensor.history.take()) {
                 number++;
             }
         }
         return number;
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
-    private boolean isUpdated(PerformanceMeasurer measurerOld) {
-        int take = this.take();
+    private boolean isUpdated() {
+        for (Sensor sensor : sensors.values()) {
+            if (sensor.take() != sensor.history.take()) {
+                return true;
+            }
+        }
 
-        if (take == 0) return false;
-        if (measurerOld == null) return true;
-
-        return take != measurerOld.take();
+        return false;
     }
 
     private boolean isForecastCompleted() {
@@ -402,6 +322,7 @@ public class PerformanceMeasurer {
     private boolean isLogAtOnce() {
         return isForecastCompleted() && !hasLogHistory();
     }
+
 
     private String log() {
         log = new StringBuffer();
@@ -436,31 +357,27 @@ public class PerformanceMeasurer {
 
     private void logOneCommon() {
         for (Sensor sensor : sensors.values()) {
-            if (sensor.isolated) continue;
-
-
-            log(sensor);
+            if (!sensor.isolated) {
+                log(sensor);
+            }
         }
     }
 
     private void logSeveralCommon() {
         for (Sensor sensor : sensors.values()) {
-            if (sensor.isolated) continue;
-
-
-            logPercent(sensor);
+            if (!sensor.isolated) {
+                logPercent(sensor);
+            }
         }
 
         log(summarySensor);
     }
 
     private void logIsolated() {
-
         for (Sensor sensor : sensors.values()) {
-            if (!sensor.isolated) continue;
-
-
-            log(sensor);
+            if (sensor.isolated) {
+                log(sensor);
+            }
         }
     }
 
@@ -520,10 +437,11 @@ public class PerformanceMeasurer {
 
     private void logThroughoutMoment() {
 
-        if (summarySensor.isStarted() && !isLogAtOnce()) {
+        if (!hasPersonalTimer() && summarySensor.isStarted() && !isLogAtOnce()) {
             log(throughputMomentSensor);
         }
     }
+
 
     private void logPercent(Sensor sensor) {
         long delta = sensor.take() - sensor.history.take();
@@ -663,6 +581,11 @@ public class PerformanceMeasurer {
         ;
     }
 
+
+    private Sensor getSensor(String name) {
+        return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name));
+    }
+
     public void measure(String name) {
         getSensor(name).measure();
     }
@@ -777,7 +700,7 @@ public class PerformanceMeasurer {
 
         private static Sensor getInstance(String name) {
             Sensor sensor = new Sensor(name);
-            sensor.history = new Sensor("DUMMY");
+            sensor.history = new Sensor("Stub-ancestor-for-sensor");
 
             return sensor;
         }
@@ -806,7 +729,7 @@ public class PerformanceMeasurer {
             clone.sensor.add(sensor.sum());
 
             this.history = clone;
-            if (clone.history != null) clone.history.history = null;
+            clone.history = null;
 
             return clone;
         }
