@@ -108,12 +108,12 @@ public class PerformanceMeasurerTest {
     @Test
     public void progressByIsolatedInfinite() throws Exception {
 
-        int alreadyKnownSize = 5;
+        int alreadyKnownSize = 3;
 
         PerformanceMeasurer.getByMethodName().possibleSize("progress", alreadyKnownSize);
 
         for (int p = 1; p <= alreadyKnownSize; p++) {
-            for (int i = 200; i <= 300; i++) {
+            for (int i = 20; i <= 30; i++) {
 
                 int rnd = nextInt(3);
 
@@ -128,7 +128,8 @@ public class PerformanceMeasurerTest {
                 // internal work
                 Thread.sleep(nextInt(i));
             }
-            Thread.sleep(15000);
+
+            Thread.sleep(15000); // logging
 
             PerformanceMeasurer.getByMethodName().measure("progress");
         }

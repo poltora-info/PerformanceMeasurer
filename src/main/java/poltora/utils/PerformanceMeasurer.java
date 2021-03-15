@@ -726,5 +726,36 @@ public class PerformanceMeasurer {
 
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "Sensor{" +
+                    "name='" + name + '\'' +
+                    ", sensor=" + sensor +
+//                    ", isolated=" + isolated +
+//                    ", possibleSize=" + possibleSize +
+//                    ", logLength=" + logLength +
+                    ", history=" + history +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "PerformanceMeasurer{" +
+                "name='" + name + '\'' +
+                ", sensors=" + sensors +
+//                ", startTime=" + startTime +
+//                ", stepStartTime=" + stepStartTime +
+//                ", stepDuration=" + stepDuration +
+//                ", currentTime=" + currentTime +
+                ", summarySensor=" + summarySensor +
+                ", throughputSensor=" + throughputSensor +
+                ", throughputMomentSensor=" + throughputMomentSensor +
+                ", duration=" + duration +
+                ", percent=" + percent +
+                ", leftTime=" + leftTime +
+                ", forecastSensor=" + forecastSensor +
+                '}';
     }
 }
