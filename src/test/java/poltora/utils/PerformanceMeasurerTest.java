@@ -372,6 +372,18 @@ public class PerformanceMeasurerTest {
     }
 
     @Test
+    public void getByMethodTwiceInf() throws Exception {
+
+        for (int i = 1; i <= 400; i++) {
+
+            PerformanceMeasurer.getByMethodName().measureByMethodName();
+
+            // internal work
+            Thread.sleep(nextInt(i));
+        }
+    }
+
+    @Test
     public void measureByClass() throws Exception {
         PerformanceMeasurer.getByMethodName().measureByClassName();
     }
