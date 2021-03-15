@@ -518,13 +518,6 @@ public class PerformanceMeasurer {
     }
 
     @SuppressWarnings("unused")
-    public PerformanceMeasurer setIsolated(String name) {
-        Sensor sensor = getSensor(name);
-        sensor.isolated = true;
-        return this;
-    }
-
-    @SuppressWarnings("unused")
     public void possibleSize(String name, long size) {
         Sensor sensor = getSensor(name);
 
@@ -532,6 +525,13 @@ public class PerformanceMeasurer {
         sensor.possibleSize = size;
         // as forecast is depend on current sensor so it is isolated
         sensor.isolated = true;
+    }
+
+    @SuppressWarnings("unused")
+    public PerformanceMeasurer setIsolated(String name) {
+        Sensor sensor = getSensor(name);
+        sensor.isolated = true;
+        return this;
     }
 
     public void start() {
