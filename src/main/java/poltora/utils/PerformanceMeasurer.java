@@ -48,6 +48,10 @@ public class PerformanceMeasurer {
     private static int time = 15;
     private static TimeUnit timeUnit = TimeUnit.SECONDS;
 
+    private static final String summarySensorName = "sum";
+    private static final String throughputSensorName = "r/s";
+    private static final String throughputMomentSensorName = "r/s/i";
+
     private Logger logger;
     private Priority priority;
     private StringBuffer log;
@@ -207,9 +211,9 @@ public class PerformanceMeasurer {
 
 
         // outside sensor list
-        summarySensor = Sensor.getInstance("sum");
-        throughputSensor = Sensor.getInstance("r/s");
-        throughputMomentSensor = Sensor.getInstance("r/s/i");
+        summarySensor = Sensor.getInstance(summarySensorName);
+        throughputSensor = Sensor.getInstance(throughputSensorName);
+        throughputMomentSensor = Sensor.getInstance(throughputMomentSensorName);
     }
 
     @SuppressWarnings("Convert2streamapi")
@@ -363,53 +367,46 @@ public class PerformanceMeasurer {
 
         logForecast();
 
-        logThroughout();
 
-        logThroughoutMoment();
+        // throughput
+        if (summarySensor.isStarted()) { //except isolated
+            log.append(throughputSensor.log(null));
+        }
 
-        logCommon();
 
-        logIsolated();
+        // throughput Moment
+        if (!hasPersonalTimer() && summarySensor.isStarted() && !isLogAtOnce()) {
+            log.append(throughputMomentSensor.log(null));
+        }
+
+
+        //common
+        if (startedCommonSensors() > 1) {
+            for (Sensor sensor : sensors.values()) {
+                if (!sensor.isolated) {
+                    log.append(sensor.log(summarySensor));
+                }
+            }
+
+            log.append(summarySensor.log(null));
+        } else {
+            for (Sensor sensor : sensors.values()) {
+                if (!sensor.isolated) {
+                    log.append(sensor.log(summarySensor));
+                }
+            }
+        }
+
+
+        //isolated
+        for (Sensor sensor : sensors.values()) {
+            if (sensor.isolated) {
+                log.append(sensor.log(null));
+            }
+        }
 
 
         return log.toString();
-    }
-
-    private void logCommon() {
-        if (startedCommonSensors() > 1) {
-            logSeveralCommon();
-        } else {
-            logOneCommon();
-        }
-    }
-
-    @SuppressWarnings("Convert2streamapi")
-    private void logOneCommon() {
-        for (Sensor sensor : sensors.values()) {
-            if (!sensor.isolated) {
-                log(sensor);
-            }
-        }
-    }
-
-    @SuppressWarnings("Convert2streamapi")
-    private void logSeveralCommon() {
-        for (Sensor sensor : sensors.values()) {
-            if (!sensor.isolated) {
-                logPercent(sensor);
-            }
-        }
-
-        log(summarySensor);
-    }
-
-    @SuppressWarnings("Convert2streamapi")
-    private void logIsolated() {
-        for (Sensor sensor : sensors.values()) {
-            if (sensor.isolated) {
-                log(sensor);
-            }
-        }
     }
 
     private void logForecast() {
@@ -429,126 +426,6 @@ public class PerformanceMeasurer {
         }
     }
 
-    private void logThroughout() {
-
-        if (summarySensor.isStarted()) { //except isolated
-            log(throughputSensor);
-        }
-    }
-
-
-    private void logThroughoutMoment() {
-
-        if (!hasPersonalTimer() && summarySensor.isStarted() && !isLogAtOnce()) {
-            log(throughputMomentSensor);
-        }
-    }
-
-
-    private void logPercent(Sensor sensor) {
-        long delta = sensor.take() - sensor.history.take();
-        float percent = (float) sensor.take() * 100 / summarySensor.take();
-        long deltaSummary = summarySensor.take() - summarySensor.history.take();
-        float deltaPercent = (float) delta * 100 / deltaSummary;
-
-        int logLength;
-        logLength = logValue(
-                sensor.history.logLength,
-                sensor.name,
-                sensor.take(),
-                percent,
-                delta,
-                deltaPercent
-        );
-        sensor.logLength = logLength;
-    }
-
-    private void log(Sensor sensor) {
-        int logLength;
-        logLength = logValue(
-                sensor.history.logLength,
-                sensor.name,
-                sensor.take(),
-                null,
-                sensor.take() - sensor.history.take(),
-                null
-        );
-
-        sensor.logLength = logLength;
-    }
-
-
-    private int logValue(int logLength, String name, long value, Float percentage, long delta, Float deltaPercentage) {
-        DecimalFormat val = new DecimalFormat("0");
-
-        log
-                .append(name)
-                .append(": ")
-        ;
-
-        int length = log.length();
-
-
-        // %
-        if (percentage != null) {
-            log
-                    .append(val.format(percentage))
-                    .append("%")
-            ;
-            log.append(" ");
-        }
-
-        // val
-        log.append(String.valueOf(value));
-
-        if (value != delta) {
-            log.append("(");
-
-            if (deltaPercentage != null) {
-                log
-                        .append(val.format(deltaPercentage))
-                        .append("% ")
-                ;
-            }
-            log
-                    .append(delta > 0 ? "+" : "")
-                    .append(String.valueOf(delta))
-                    .append(")")
-            ;
-        }
-
-
-        log.append(";");
-
-        if (value == delta && !isForecastCompleted()) {
-            if (percentage != null) { //not deltaPercentage
-                log
-                        .append(
-                                StringUtils.repeat(" ", String.valueOf(val.format(percentage)).length())
-                        )
-                        .append(StringUtils.repeat(" ", 2)); // _%
-            }
-            log
-                    .append(
-                            StringUtils.repeat(" ", String.valueOf(value).length())
-                    )
-                    .append(StringUtils.repeat(" ", 3)); // (+)
-        }
-
-        int currentLength = log.length() - length;
-
-        if (currentLength < logLength) {
-            log.append(StringUtils.repeat(" ", logLength - currentLength));
-        }
-
-        if (logLength < currentLength) {
-            logLength = currentLength;
-        }
-
-        log.append("  ");
-
-        return logLength;
-    }
 
     private int logValue(int logLength, int value, String name) {
 
@@ -672,7 +549,7 @@ public class PerformanceMeasurer {
         Sensor sensor = getSensor(name);
 
         sensor.possibleSize = size;
-        // as forecast is depend on by current sensor so it is isolated
+        // as forecast is depend on current sensor so it is isolated
         sensor.isolated = true;
     }
 
@@ -694,6 +571,11 @@ public class PerformanceMeasurer {
     }
 
     public static class Sensor {
+
+        private static String logTemplVal = "%s: %s;  "; //sum: 246;
+        private static String logTemplDelta = "%s: %s(%s%s);  "; //sum: 342(+96);
+        private static String logTemplPerc = "%s: %s%% %s;  "; //success: 33% 81;
+        private static String logTemplDeltaPercent = "%s: %s%% %s(%s%% %s%s);  "; //success: 30% 125(28% +22);
 
         private String name;
         private LongAdder sensor;
@@ -756,6 +638,94 @@ public class PerformanceMeasurer {
 
         private boolean isStarted() {
             return sensor.sum() != 0;
+        }
+
+        private boolean isAlreadyLogging() {
+            return history.sensor.sum() != 0;
+        }
+
+        private boolean isUpdated() {
+            return take() != history.take();
+        }
+
+
+        private String log(Sensor summarySensor) {
+
+            String result;
+
+
+            DecimalFormat format = new DecimalFormat("0");
+
+            boolean isAlone = summarySensor != null && this.take() == summarySensor.take();
+            boolean isSpecialSensors = name.equals(summarySensorName) || name.equals(throughputSensorName) || name.equals(throughputMomentSensorName);
+
+
+            long val = take();
+            if (isolated || isSpecialSensors || isAlone) {
+                if (!isAlreadyLogging()) {
+                    result = String.format(logTemplVal, //sum: 246;
+                            name,
+                            val
+                    );
+
+/*
+                    if (!isForecastCompleted()){
+                        result += StringUtils.repeat(" ", String.valueOf(val).length() + 3); // (+)
+                    }
+*/
+
+                } else {
+                    long delta = val - history.take();
+
+                    result = String.format(logTemplDelta, //sum: 342(+96);
+                            name,
+                            val,
+                            delta > 0 ? "+" : "",
+                            delta
+                    );
+                }
+            } else {
+                float percent = (float) val * 100 / summarySensor.take();
+
+                if (!isAlreadyLogging()) {
+                    result = String.format(logTemplPerc, //success: 33% 81;
+                            name,
+                            format.format(percent),
+                            val
+                    );
+
+/*
+                    if (!isForecastCompleted()) {
+                        result += StringUtils.repeat(" ", String.valueOf(format.format(percent)).length() + 2);// _%
+                    }
+*/
+
+                } else {
+                    long delta = val - history.take();
+                    float deltaPercent = (float) delta * 100 / (summarySensor.take() - summarySensor.history.take());
+
+                    result = String.format(logTemplDeltaPercent, //success: 30% 125(28% +22);
+                            name,
+                            format.format(percent),
+                            val,
+                            format.format(deltaPercent),
+                            delta > 0 ? "+" : "",
+                            delta
+                    );
+                }
+            }
+
+
+            int currentLength = result.length();
+
+            if (currentLength < logLength) {
+                result += StringUtils.repeat(" ", logLength - currentLength);
+            }
+            if (currentLength > logLength) {
+                logLength = currentLength;
+            }
+
+            return result;
         }
     }
 }
