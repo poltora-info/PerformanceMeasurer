@@ -651,12 +651,9 @@ public class PerformanceMeasurer {
                             val
                     );
 
-/*
-                    if (!isForecastCompleted()){
+                    if (!measurer.isForecastCompleted()) {
                         result += StringUtils.repeat(" ", String.valueOf(val).length() + 3); // (+)
                     }
-*/
-
                 } else {
                     long delta = val - history.take();
 
@@ -679,12 +676,9 @@ public class PerformanceMeasurer {
                             val
                     );
 
-/*
-                    if (!isForecastCompleted()) {
+                    if (!measurer.isForecastCompleted()) {
                         result += StringUtils.repeat(" ", String.valueOf(format.format(percent)).length() + 2);// _%
                     }
-*/
-
                 } else {
                     long delta = val - history.take();
                     float deltaPercent = (float) delta * 100 / (summarySensor.take() - summarySensor.history.take());
