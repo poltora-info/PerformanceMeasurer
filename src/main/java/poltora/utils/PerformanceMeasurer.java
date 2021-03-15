@@ -358,10 +358,11 @@ public class PerformanceMeasurer {
             }
         }
 
-
         //progress
-        if (percent != 100 || hasLogHistory()) {
-            logValue(4, (int) percent, "%");
+        if (forecastSensor != null) {
+            if (percent != 100 || hasLogHistory()) {
+                logValue(4, (int) percent, "%");
+            }
         }
 
 
