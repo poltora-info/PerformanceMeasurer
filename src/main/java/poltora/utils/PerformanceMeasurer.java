@@ -698,7 +698,10 @@ public class PerformanceMeasurer {
                     }
                 } else {
                     long delta = val - history.take();
-                    float deltaPercent = (float) delta * 100 / (summarySensor.take() - summarySensor.history.take());
+                    float deltaPercent = 0;
+                    if (delta != 0) {
+                        deltaPercent = (float) delta * 100 / (summarySensor.take() - summarySensor.history.take());
+                    }
 
                     result = String.format(logTemplDeltaPercent, //success: 30% 125(28% +22);
                             name,
