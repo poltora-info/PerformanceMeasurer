@@ -346,14 +346,16 @@ public class PerformanceMeasurer {
 
 
         //forecast
-        if (percent == 0 && leftTime == 0) {
-            logValue("   ∞    ");
-        } else if (percent == 100) {
-            if (hasLogHistory()) {
-                logValue("   .    ");
+        if (forecastSensor != null) {
+            if (percent == 0 && leftTime == 0) {
+                logValue("   ∞    ");
+            } else if (percent == 100) {
+                if (hasLogHistory()) {
+                    logValue("   .    ");
+                }
+            } else {
+                logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
             }
-        } else {
-            logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
         }
 
 
@@ -365,13 +367,13 @@ public class PerformanceMeasurer {
 
         // throughput
         if (summarySensor.isStarted()) { //except isolated
-            log.append(throughputSensor.log(null));
+            log.append(throughputSensor.log());
         }
 
 
         // throughput Moment
         if (!hasPersonalTimer() && summarySensor.isStarted() && !isLogAtOnce()) {
-            log.append(throughputMomentSensor.log(null));
+            log.append(throughputMomentSensor.log());
         }
 
 
@@ -383,7 +385,7 @@ public class PerformanceMeasurer {
                 }
             }
 
-            log.append(summarySensor.log(null));
+            log.append(summarySensor.log());
         } else {
             for (Sensor sensor : sensors.values()) {
                 if (!sensor.isolated) {
@@ -396,7 +398,7 @@ public class PerformanceMeasurer {
         //isolated
         for (Sensor sensor : sensors.values()) {
             if (sensor.isolated) {
-                log.append(sensor.log(null));
+                log.append(sensor.log());
             }
         }
 
@@ -629,6 +631,10 @@ public class PerformanceMeasurer {
             return take() != history.take();
         }
 
+
+        private String log() {
+            return log(null);
+        }
 
         private String log(Sensor summarySensor) {
 
