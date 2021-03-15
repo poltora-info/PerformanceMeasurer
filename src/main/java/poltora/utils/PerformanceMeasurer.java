@@ -326,7 +326,7 @@ public class PerformanceMeasurer {
     }
 
     private boolean hasLogHistory() {
-        return summarySensor.history.isStarted();
+        return summarySensor.hasLogHistory();
     }
 
     private boolean isLogAtOnce() {
@@ -334,6 +334,7 @@ public class PerformanceMeasurer {
     }
 
 
+    @SuppressWarnings("Convert2streamapi")
     private String log() {
         log = new StringBuffer();
 
@@ -343,7 +344,23 @@ public class PerformanceMeasurer {
 
         logValue(DurationFormatUtils.formatDuration(duration, "HH:mm:ss"));
 
-        logForecast();
+
+        //forecast
+        if (percent == 0 && leftTime == 0) {
+            logValue("   ∞    ");
+        } else if (percent == 100) {
+            if (hasLogHistory()) {
+                logValue("   .    ");
+            }
+        } else {
+            logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
+        }
+
+
+        //progress
+        if (percent != 100 || hasLogHistory()) {
+            logValue(4, (int) percent, "%");
+        }
 
 
         // throughput
@@ -387,32 +404,12 @@ public class PerformanceMeasurer {
         return log.toString();
     }
 
-    private void logForecast() {
-
-        if (percent == 0 && leftTime == 0) {
-            logValue("   ∞    ");
-        } else if (percent == 100) {
-            if (hasLogHistory()) {
-                logValue("   .    ");
-            }
-        } else {
-            logValue(DurationFormatUtils.formatDuration(leftTime, "HH:mm:ss"));
-        }
-
-        if (percent != 100 || hasLogHistory()) {
-            logValue(4, (int) percent, "%");
-        }
-    }
-
 
     private int logValue(int logLength, int value, String name) {
-
-
         int length = log.length();
 
 
         log.append(String.valueOf(value));
-
         log.append(name);
 
 
@@ -621,11 +618,11 @@ public class PerformanceMeasurer {
         }
 
         private boolean isStarted() {
-            return sensor.sum() != 0;
+            return take() != 0;
         }
 
-        private boolean isAlreadyLogging() {
-            return history.sensor.sum() != 0;
+        private boolean hasLogHistory() {
+            return history.isStarted();
         }
 
         private boolean isUpdated() {
@@ -645,7 +642,7 @@ public class PerformanceMeasurer {
 
             long val = take();
             if (isolated || isSpecialSensors || isAlone) {
-                if (!isAlreadyLogging()) {
+                if (!hasLogHistory()) {
                     result = String.format(logTemplVal, //sum: 246;
                             name,
                             val
@@ -669,7 +666,7 @@ public class PerformanceMeasurer {
 
                 float percent = (float) val * 100 / summarySensor.take();
 
-                if (!isAlreadyLogging()) {
+                if (!hasLogHistory()) {
                     result = String.format(logTemplPerc, //success: 33% 81;
                             name,
                             format.format(percent),
@@ -677,6 +674,7 @@ public class PerformanceMeasurer {
                     );
 
                     if (!measurer.isForecastCompleted()) {
+                        result += StringUtils.repeat(" ", String.valueOf(val).length() + 3); // (+)
                         result += StringUtils.repeat(" ", String.valueOf(format.format(percent)).length() + 2);// _%
                     }
                 } else {
