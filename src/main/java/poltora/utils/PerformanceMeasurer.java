@@ -138,29 +138,41 @@ public class PerformanceMeasurer {
         if (measurers.isEmpty()) return;
 
 
-        List<Map.Entry<String, PerformanceMeasurer>> list = new ArrayList<>(measurers.entrySet());
+        boolean flg = false;
+        for (PerformanceMeasurer measurer : measurers.values()) {
+            if (measurer.isUpdated()) {
+                flg = true;
+                break;
+            }
+        }
+        if (!flg) return;
+
+
+        List<PerformanceMeasurer> list = new ArrayList<>();
+        for (PerformanceMeasurer measurer : measurers.values()) {
+            if (measurer.isUpdated()) {
+                list.add(measurer);
+            }
+        }
+
         Collections.sort(list, (o1, o2) -> {
-            long startTime1 = o1.getValue().startTime;
-            long startTime2 = o2.getValue().startTime;
+            long startTime1 = o1.startTime;
+            long startTime2 = o2.startTime;
 
             return startTime1 > startTime2 ? 1 : startTime1 < startTime2 ? -1 : 0;
         });
 
 
-        for (Map.Entry<String, PerformanceMeasurer> entry : list) {
-            PerformanceMeasurer measurer = entry.getValue();
+        for (PerformanceMeasurer measurer : list) {
 
-            if (measurer.isUpdated()) {
+            measurer.makeSummary();
 
-                measurer.makeSummary();
+            measurer.logger.log(
+                    measurer.priority,
+                    measurer.log()
+            );
 
-                measurer.logger.log(
-                        measurer.priority,
-                        measurer.log()
-                );
-
-                measurer.snapshot();
-            }
+            measurer.snapshot();
         }
     }
 
