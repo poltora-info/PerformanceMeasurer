@@ -211,9 +211,9 @@ public class PerformanceMeasurer {
 
 
         // outside sensor list
-        summarySensor = Sensor.getInstance(summarySensorName);
-        throughputSensor = Sensor.getInstance(throughputSensorName);
-        throughputMomentSensor = Sensor.getInstance(throughputMomentSensorName);
+        summarySensor = Sensor.getInstance(summarySensorName, this);
+        throughputSensor = Sensor.getInstance(throughputSensorName, this);
+        throughputMomentSensor = Sensor.getInstance(throughputMomentSensorName, this);
     }
 
     @SuppressWarnings("Convert2streamapi")
@@ -440,7 +440,7 @@ public class PerformanceMeasurer {
 
 
     private Sensor getSensor(String name) {
-        return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name));
+        return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name, this));
     }
 
     public void measure(String name) {
@@ -559,26 +559,29 @@ public class PerformanceMeasurer {
         private static String logTemplDeltaPercent = "%s: %s%% %s(%s%% %s%s);  "; //success: 30% 125(28% +22);
 
         private String name;
+        private PerformanceMeasurer measurer;
         private LongAdder sensor;
         private boolean isolated;
         private long possibleSize;
         private int logLength;
         private Sensor history;
 
-        private static Sensor getInstance(String name) {
-            Sensor sensor = new Sensor(name);
-            sensor.history = new Sensor("Stub-ancestor-for-sensor");
+        private static Sensor getInstance(String name, PerformanceMeasurer measurer) {
+            Sensor sensor = new Sensor(name, measurer);
+            sensor.history = new Sensor("Stub-ancestor-for-sensor", measurer);
 
             return sensor;
         }
 
-        private Sensor(String name) {
+        private Sensor(String name, PerformanceMeasurer measurer) {
             this.name = name;
+            this.measurer = measurer;
             sensor = new LongAdder();
         }
 
         private Sensor(Sensor other) {
             this.name = other.name;
+            this.measurer = other.measurer;
             this.isolated = other.isolated;
             this.possibleSize = other.possibleSize;
             this.logLength = other.logLength;
@@ -635,9 +638,8 @@ public class PerformanceMeasurer {
             String result;
 
 
-            DecimalFormat format = new DecimalFormat("0");
-
             boolean isAlone = summarySensor != null && this.take() == summarySensor.take();
+
             boolean isSpecialSensors = name.equals(summarySensorName) || name.equals(throughputSensorName) || name.equals(throughputMomentSensorName);
 
 
@@ -666,6 +668,8 @@ public class PerformanceMeasurer {
                     );
                 }
             } else {
+                DecimalFormat format = new DecimalFormat("0");
+
                 float percent = (float) val * 100 / summarySensor.take();
 
                 if (!isAlreadyLogging()) {
