@@ -58,7 +58,6 @@ public class PerformanceMeasurer {
 
     private String name;
     private Map<String, Sensor> sensors;
-    private int possibleSize;
     private long startTime;
     private ThreadLocal<Long> stepStartTime;
     private AtomicLong stepDuration;
@@ -73,6 +72,7 @@ public class PerformanceMeasurer {
     private long duration;
     private float percent;
     private long leftTime;
+    private Sensor forecastSensor;
 
     static {
         PerformanceMeasurer.addShutdownHook();
@@ -268,19 +268,9 @@ public class PerformanceMeasurer {
         long count = 0;
         long size = 0;
 
-        if (possibleSize != 0) {
-            // all sensors forecast
-            count = summarySensor.take();
-            size = possibleSize;
-        } else {
-            // exact sensor forecast
-            for (Sensor sensor : sensors.values()) {
-                if (sensor.possibleSize != 0) {
-                    count = sensor.take();
-                    size = sensor.possibleSize;
-                    break;
-                }
-            }
+        if (forecastSensor != null) {
+            count = forecastSensor.take();
+            size = forecastSensor.possibleSize;
         }
 
         if (count != 0) {
@@ -332,19 +322,7 @@ public class PerformanceMeasurer {
     }
 
     private boolean isForecastCompleted() {
-
-        if (possibleSize != 0) {
-            // all sensors forecast
-            return summarySensor.take() >= possibleSize;
-        } else {
-            // exact sensor forecast
-            for (Sensor sensor : sensors.values()) {
-                if (sensor.possibleSize != 0) {
-                    return sensor.take() >= sensor.possibleSize;
-                }
-            }
-            return false;
-        }
+        return forecastSensor != null && forecastSensor.take() >= forecastSensor.possibleSize;
     }
 
     private boolean hasLogHistory() {
@@ -534,7 +512,9 @@ public class PerformanceMeasurer {
     }
 
     public void possibleSize(int size) {
-        this.possibleSize = size;
+        this.forecastSensor = summarySensor;
+
+        this.summarySensor.possibleSize = size;
     }
 
     @SuppressWarnings("unused")
@@ -548,6 +528,7 @@ public class PerformanceMeasurer {
     public void possibleSize(String name, long size) {
         Sensor sensor = getSensor(name);
 
+        this.forecastSensor = sensor;
         sensor.possibleSize = size;
         // as forecast is depend on current sensor so it is isolated
         sensor.isolated = true;
