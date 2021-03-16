@@ -560,9 +560,9 @@ public class PerformanceMeasurer {
     public static class Sensor {
 
         private static String logTemplVal = "%s: %s;  "; //sum: 246;
-        private static String logTemplDelta = "%s: %s(%s%s);  "; //sum: 342(+96);
+        private static String logTemplDelta = "%s: %s(%s);  "; //sum: 342(+96);
         private static String logTemplPerc = "%s: %s%% %s;  "; //success: 33% 81;
-        private static String logTemplDeltaPercent = "%s: %s%% %s(%s%% %s%s);  "; //success: 30% 125(28% +22);
+        private static String logTemplDeltaPercent = "%s: %s%% %s(%s%% %s);  "; //success: 30% 125(28% +22);
 
         private String name;
         private PerformanceMeasurer measurer;
@@ -666,8 +666,7 @@ public class PerformanceMeasurer {
                     result = String.format(logTemplDelta, //sum: 342(+96);
                             name,
                             val,
-                            delta >= 0 ? "+" : "",
-                            delta
+                            delta >= 0 ? "+" + delta : delta
                     );
                 }
             } else {
@@ -698,8 +697,7 @@ public class PerformanceMeasurer {
                             format.format(percent),
                             val,
                             format.format(deltaPercent),
-                            delta >= 0 ? "+" : "",
-                            delta
+                            delta >= 0 ? "+" + delta : delta
                     );
                 }
             }
