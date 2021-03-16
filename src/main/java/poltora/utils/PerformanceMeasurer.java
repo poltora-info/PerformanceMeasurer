@@ -394,7 +394,7 @@ public class PerformanceMeasurer {
         if (startedCommonSensors() > 1) {
             for (Sensor sensor : sensors.values()) {
                 if (!sensor.isolated) {
-                    log.append(sensor.log(summarySensor));
+                    log.append(sensor.log());
                 }
             }
 
@@ -402,7 +402,7 @@ public class PerformanceMeasurer {
         } else {
             for (Sensor sensor : sensors.values()) {
                 if (!sensor.isolated) {
-                    log.append(sensor.log(summarySensor));
+                    log.append(sensor.log());
                 }
             }
         }
@@ -646,15 +646,11 @@ public class PerformanceMeasurer {
 
 
         private String log() {
-            return log(null);
-        }
-
-        private String log(Sensor summarySensor) {
 
             String result;
 
 
-            boolean isAlone = summarySensor != null && this.take() == summarySensor.take();
+            boolean isAlone = this.take() == measurer.summarySensor.take();
 
             boolean isSpecialSensors = name.equals(summarySensorName) || name.equals(throughputSensorName) || name.equals(throughputMomentSensorName);
 
@@ -683,7 +679,7 @@ public class PerformanceMeasurer {
             } else {
                 DecimalFormat format = new DecimalFormat("0");
 
-                float percent = (float) val * 100 / summarySensor.take();
+                float percent = (float) val * 100 / measurer.summarySensor.take();
 
                 if (!hasLogHistory()) {
                     result = String.format(logTemplPerc, //success: 33% 81;
@@ -700,7 +696,7 @@ public class PerformanceMeasurer {
                     long delta = val - history.take();
                     float deltaPercent = 0;
                     if (delta != 0) {
-                        deltaPercent = (float) delta * 100 / (summarySensor.take() - summarySensor.history.take());
+                        deltaPercent = (float) delta * 100 / (measurer.summarySensor.take() - measurer.summarySensor.history.take());
                     }
 
                     result = String.format(logTemplDeltaPercent, //success: 30% 125(28% +22);
