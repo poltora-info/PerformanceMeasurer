@@ -21,9 +21,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -138,41 +135,18 @@ public class PerformanceMeasurer {
         if (measurers.isEmpty()) return;
 
 
-        boolean flg = false;
         for (PerformanceMeasurer measurer : measurers.values()) {
             if (measurer.isUpdated()) {
-                flg = true;
-                break;
+
+                measurer.makeSummary();
+
+                measurer.logger.log(
+                        measurer.priority,
+                        measurer.log()
+                );
+
+                measurer.snapshot();
             }
-        }
-        if (!flg) return;
-
-
-        List<PerformanceMeasurer> list = new ArrayList<>();
-        for (PerformanceMeasurer measurer : measurers.values()) {
-            if (measurer.isUpdated()) {
-                list.add(measurer);
-            }
-        }
-
-        Collections.sort(list, (o1, o2) -> {
-            long startTime1 = o1.startTime;
-            long startTime2 = o2.startTime;
-
-            return startTime1 > startTime2 ? 1 : startTime1 < startTime2 ? -1 : 0;
-        });
-
-
-        for (PerformanceMeasurer measurer : list) {
-
-            measurer.makeSummary();
-
-            measurer.logger.log(
-                    measurer.priority,
-                    measurer.log()
-            );
-
-            measurer.snapshot();
         }
     }
 
@@ -390,20 +364,13 @@ public class PerformanceMeasurer {
 
 
         //common
+        for (Sensor sensor : sensors.values()) {
+            if (!sensor.isolated) {
+                log.append(sensor.log());
+            }
+        }
         if (startedCommonSensors() > 1) {
-            for (Sensor sensor : sensors.values()) {
-                if (!sensor.isolated) {
-                    log.append(sensor.log());
-                }
-            }
-
             log.append(summarySensor.log());
-        } else {
-            for (Sensor sensor : sensors.values()) {
-                if (!sensor.isolated) {
-                    log.append(sensor.log());
-                }
-            }
         }
 
 
