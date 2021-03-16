@@ -372,7 +372,7 @@ public class PerformanceMeasurer {
         //progress
         if (forecastSensor != null) {
             if (percent != 100 || hasLogHistory()) {
-                logValue(4, (int) percent, "%");
+                logProgress((int) percent);
             }
         }
 
@@ -419,27 +419,22 @@ public class PerformanceMeasurer {
     }
 
 
-    private int logValue(int logLength, int value, String name) {
-        int length = log.length();
+    private void logProgress(int value) {
+
+        String valueOf = String.valueOf(value);
+        log.append(valueOf);
+        log.append("%");
 
 
-        log.append(String.valueOf(value));
-        log.append(name);
+        int currentLength = valueOf.length() + 1;
 
-
-        int currentLength = log.length() - length;
-
+        int logLength = 4; //100%
         if (currentLength < logLength) {
             log.append(StringUtils.repeat(" ", logLength - currentLength));
         }
 
-        if (logLength < currentLength) {
-            logLength = currentLength;
-        }
 
         log.append(" ");
-
-        return logLength;
     }
 
     private void logValue(String value) {
