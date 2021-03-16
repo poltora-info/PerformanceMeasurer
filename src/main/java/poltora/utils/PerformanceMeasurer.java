@@ -315,8 +315,7 @@ public class PerformanceMeasurer {
     private int updatedSensors() {
         int number = 0;
         for (Sensor sensor : sensors.values()) {
-
-            if (sensor.take() != sensor.history.take()) {
+            if (sensor.isUpdated()) {
                 number++;
             }
         }
@@ -325,7 +324,7 @@ public class PerformanceMeasurer {
 
     private boolean isUpdated() {
         for (Sensor sensor : sensors.values()) {
-            if (sensor.take() != sensor.history.take()) {
+            if (sensor.isUpdated()) {
                 return true;
             }
         }
@@ -338,7 +337,7 @@ public class PerformanceMeasurer {
     }
 
     private boolean hasLogHistory() {
-        return summarySensor.hasLogHistory();
+        return summarySensor.hasHistory();
     }
 
     private boolean isLogAtOnce() {
@@ -636,7 +635,7 @@ public class PerformanceMeasurer {
             return take() != 0;
         }
 
-        private boolean hasLogHistory() {
+        private boolean hasHistory() {
             return history.isStarted();
         }
 
@@ -657,7 +656,7 @@ public class PerformanceMeasurer {
 
             long val = take();
             if (isolated || isSpecialSensors || isAlone) {
-                if (!hasLogHistory()) {
+                if (!hasHistory()) {
                     result = String.format(logTemplVal, //sum: 246;
                             name,
                             val
@@ -681,7 +680,7 @@ public class PerformanceMeasurer {
 
                 float percent = (float) val * 100 / measurer.summarySensor.take();
 
-                if (!hasLogHistory()) {
+                if (!hasHistory()) {
                     result = String.format(logTemplPerc, //success: 33% 81;
                             name,
                             format.format(percent),
