@@ -509,7 +509,7 @@ public class PerformanceMeasurer {
     public void possibleSize(int size) {
         this.forecastSensor = summarySensor;
 
-        this.summarySensor.possibleSize = size;
+        this.forecastSensor.possibleSize = size;
     }
 
     @SuppressWarnings("unused")
@@ -517,7 +517,8 @@ public class PerformanceMeasurer {
         Sensor sensor = getSensor(name);
 
         this.forecastSensor = sensor;
-        sensor.possibleSize = size;
+        forecastSensor.possibleSize = size;
+
         // as forecast is depend on current sensor so it is isolated
         sensor.isolated = true;
     }
