@@ -449,59 +449,40 @@ public class PerformanceMeasurer {
         return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name, this));
     }
 
-    public void measure(String name) {
-        getSensor(name).measure();
-    }
 
-    public void success() {
-        getSensor(SUCCESS_NAME).measure();
-    }
-
-    public void error() {
-        getSensor(ERROR_NAME).measure();
-    }
-
-    public void fail() {
-        getSensor(FAIL_NAME).measure();
-    }
-
-    public void measureByClassName() {
-//        String className = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
-        String className = Thread.currentThread().getStackTrace()[2].getClassName();
-
-        className = className.substring(className.lastIndexOf('.') + 1);
-
-        getSensor(className).measure();
-    }
-
-    public void measureByMethodName() {
-        String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
-
-        getSensor(methodName).measure();
-    }
-
-
-    @SuppressWarnings("unused")
     public void measure(String name, int delta) {
         getSensor(name).measure(delta);
     }
 
-    @SuppressWarnings("unused")
+    public void measure(String name) {
+        measure(name, 1);
+    }
+
     public void success(int delta) {
         getSensor(SUCCESS_NAME).measure(delta);
     }
 
-    @SuppressWarnings("unused")
+    public void success() {
+        success(1);
+    }
+
     public void error(int delta) {
         getSensor(ERROR_NAME).measure(delta);
     }
 
-    @SuppressWarnings("unused")
+    public void error() {
+        error(1);
+    }
+
+
     public void fail(int delta) {
         getSensor(FAIL_NAME).measure(delta);
     }
 
-    @SuppressWarnings("unused")
+    public void fail() {
+        fail(1);
+    }
+
     public void measureByClassName(int delta) {
 //        String className = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
         String className = Thread.currentThread().getStackTrace()[2].getClassName();
@@ -510,12 +491,20 @@ public class PerformanceMeasurer {
         getSensor(className).measure(delta);
     }
 
-    @SuppressWarnings("unused")
+    public void measureByClassName() {
+        measureByClassName(1);
+    }
+
     public void measureByMethodName(int delta) {
         String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
 
         getSensor(methodName).measure(delta);
     }
+
+    public void measureByMethodName() {
+        measureByMethodName(1);
+    }
+
 
     public void possibleSize(int size) {
         this.forecastSensor = summarySensor;
