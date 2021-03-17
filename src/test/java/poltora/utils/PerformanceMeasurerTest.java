@@ -406,5 +406,11 @@ public class PerformanceMeasurerTest {
         PerformanceMeasurer.getByMethodName().setPriority(Priority.DEBUG).setIsolated("isolated").measure("isolated");
         PerformanceMeasurer.getByMethodName().setIsolated("isolated").setPriority(Priority.DEBUG).measure("isolated");
     }
+    @Test
+    public void performanceManiac() throws Exception {
+        PerformanceMeasurer measurer = PerformanceMeasurer.get();
+        PerformanceMeasurer.Sensor successSensor = measurer.getSensor("success");
+        successSensor.measure();
+    }
 }
 

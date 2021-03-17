@@ -412,7 +412,7 @@ public class PerformanceMeasurer {
     }
 
 
-    private Sensor getSensor(String name) {
+    public Sensor getSensor(String name) {
         return sensors.computeIfAbsent(name, k -> Sensor.getInstance(name, this));
     }
 
@@ -567,11 +567,11 @@ public class PerformanceMeasurer {
             return clone;
         }
 
-        private void measure() {
+        public void measure() {
             sensor.increment();
         }
 
-        private void measure(long delta) {
+        public void measure(long delta) {
             sensor.add(delta);
         }
 
